@@ -1,4 +1,5 @@
 var players = [];
+var servers = [];
 /*
 * Streaming game to player 
 */
@@ -13,19 +14,32 @@ app.use(express.static(__dirname + "/"))
 
 var server = http.createServer(app)
 server.listen(port)
+
 var wss = new WebSocketServer({server: server})
-console.log("Streaming game to player => websocket port %d", port)
+console.log("websocket => port %d", port)
 
 wss.on("connection", function(ws) {
 	players.push(ws);
  	console.log("player in");
- 	//console.log("players size"+players.length);
+
 	ws.on("close", function(ws) {
 		var index = players.indexOf(ws);
-		//console.log("index"+index);
 		players = players.slice(index,1);
 		console.log("player out");
 	});
+
+	ws.on("message", function(message) {
+		for (var i=0; i < servers.length; i++) {
+			try{
+				servers[i].write(message);
+			}catch(e){
+				var index = servers.indexOf(socket);
+				servers = servers.slice(index,1);
+				console.log("server disconnected may error");
+			}
+		}
+	});
+
 	ws.on("error", function(error) {
 		console.log(error);
 	});
@@ -33,21 +47,40 @@ wss.on("connection", function(ws) {
 
 
 /*
-* Listening to game stream
+* output game stream 
 */
 
 var net = require('net');
-var server = net.createServer(function (socket) {
+var oserver = net.createServer(function (socket) {
 	socket.on('data', function(data) {
-		console.log(data.toString());
+		//console.log(data.toString());
 		for (var i=0; i < players.length; i++) {
-			console.log(players[i].readyState)
 			if(players[i].readyState == 1){
 				players[i].send(data.toString());
 			}
 		}
 	});
 });
-var udp_port = 1337;
-server.listen(udp_port, '127.0.0.1');
-console.log("Listening to game stream => udp port %d,",udp_port);
+var oport = 1337;
+oserver.listen(oport, '127.0.0.1');
+console.log("outputstream => port %d,",oport);
+
+/*
+* input game stream 
+*/
+
+var iserver = net.createServer(function (socket) {
+	socket.on('end',function(){
+		var index = servers.indexOf(socket);
+		servers = servers.slice(index,1);
+		console.log("server disconnected");
+	});
+	socket.on("error", function(error) {
+		console.log("server disconnected error");
+	});
+	servers.push(socket);
+	console.log("server connected");
+});
+var iport = 1234;
+iserver.listen(iport, '127.0.0.1');
+console.log("inputstream => port %d,",iport);

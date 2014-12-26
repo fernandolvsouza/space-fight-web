@@ -14,12 +14,29 @@
 
     </style>
     <script src="./pixi.dev.js"></script>
+    <script src="./keydrown.min.js"></script>
+    
    
   </head>
   <body>
+
+  <script>
+    var host = location.origin.replace(/^http/, 'ws')
+    var ws = new WebSocket(host);
+    var stream = null;
+
+    ws.onmessage = function (event) {
+      var datas =  event.data.split('\n');
+      for (var i = 0; i <= datas.length; i++) {
+        if(typeof(datas[i]) !=  "undefined" && datas[i] != ""){
+          //console.log(datas[i]);
+          stream = JSON.parse(datas[i]);
+        }
+      };
+    };
+  </script>
   <script>
 
-    var stream = null;
     var graphics = []
     var scaleToPixel = 5;
     var fps = 60;
@@ -41,6 +58,7 @@
     stage.addChild(b);
 
     function update() {
+      kd.tick();
       b.clear();
       for (var i = 0; i < graphics.length; i++) {
         graphics[i].clear();
@@ -119,46 +137,66 @@
       graphics.push(g);
     }
 
-    /*function updateShip(sprite,ship,stage){
-      sprite.anchor.x = 0.5;
-      sprite.anchor.y = 0.5;
-      sprite.position.x = convertX(ship.x);
-      sprite.position.y = convertY(ship.y);
-      sprite.rotation = -ship.angle + Math.PI/2;
+  </script>
 
-      for (var i = 0; i < ship.bullets.length; i++) {
-        var b = sprite.bullets[ship.bullets[i].id];
-        if(!b){
-          b = new PIXI.Sprite(b_texture);
-          b.id = ship.bullets[i].id;
-          sprite.bullets[b.id] = b;          
-          //stage.addChild(b);
-        }
-        b.position.x = convertX(ship.bullets[i].x);
-        b.position.y = convertY(ship.bullets[i].y);
-        b.rotation = sprite.rotation;
-      }
-    }*/
+  <script>
+  kd.LEFT.down(function () {
+    if(ws.readyState == 1){
+      ws.send("LEFT_1\n");
+    }
+  });
+  kd.UP.down(function () {
+    if(ws.readyState == 1){
+      ws.send("UP_1\n");
+    }
+  });
+  kd.DOWN.down(function () {
+    if(ws.readyState == 1){
+      ws.send("DOWN_1\n");
+    }
+  });
+  kd.RIGHT.down(function () {
+    if(ws.readyState == 1){
+      ws.send("RIGHT_1\n");
+    }
+  });
+  kd.S.down(function () {
+    console.log("FIRE_1");
+    if(ws.readyState == 1){
+      ws.send("FIRE_1\n");
+    }
+  });
+
+  kd.LEFT.up(function () {
+    if(ws.readyState == 1){
+      ws.send("LEFT_0\n");
+    }
+  });
+  kd.UP.up(function () {
+    if(ws.readyState == 1){
+      ws.send("UP_0\n");
+    }
+  });
+  kd.DOWN.up(function () {
+    if(ws.readyState == 1){
+      ws.send("DOWN_0\n");
+    }
+  });
+  kd.RIGHT.up(function () {
+    if(ws.readyState == 1){
+      ws.send("RIGHT_0\n");
+    }
+  });
+  kd.S.up(function () {
+    console.log("FIRE_0");
+    if(ws.readyState == 1){
+      ws.send("FIRE_0\n");
+    }
+  });
 
   </script>
 
-   <script>
-
-      var host = location.origin.replace(/^http/, 'ws')
-      var ws = new WebSocket(host);
-      ws.onmessage = function (event) {
-        
-        var datas =  event.data.split('\n');
-        for (var i = 0; i <= datas.length; i++) {
-          if(typeof(datas[i]) !=  "undefined" && datas[i] != ""){
-            console.log(datas[i]);
-            stream = JSON.parse(datas[i]);
-          }
-        };
-      };
-    </script>
-
-    <script>
+  <script>
     (function() {
     var lastTime = 0;
     var vendors = ['ms', 'moz', 'webkit', 'o'];
@@ -183,6 +221,6 @@
             clearTimeout(id);
         };
 }());
-    </script>
+  </script>
   </body>
 </html>
