@@ -31,6 +31,7 @@ wss.on("connection", function(ws) {
 	ws.on("message", function(message) {
 		for (var i=0; i < servers.length; i++) {
 			try{
+				console.log("message : " + message)
 				servers[i].write(message);
 			}catch(e){
 				var index = servers.indexOf(socket);

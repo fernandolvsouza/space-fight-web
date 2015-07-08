@@ -140,59 +140,62 @@
   </script>
 
   <script>
-  kd.LEFT.down(function () {
-    if(ws.readyState == 1){
-      ws.send("LEFT_1\n");
+  function EventControl(ws){
+    
+    this.ws = ws;
+
+    this.sendkeyMessage = function (key,pressed){
+      this.sendObject({event: key, pressed: pressed });  
     }
+
+    this.sendNewPlayerMessage = function (){
+      this.sendObject({event: "NEW_PLAYER"});
+    }
+
+    this.sendObject = function(obj){
+      console.log("sendObject" +  obj);
+      if(this.ws.readyState == 1){
+        this.ws.send(JSON.stringify(obj)+ "\n")
+      }
+    }
+  }
+
+  var control = new EventControl(ws);
+
+  //key pressed
+  kd.LEFT.down(function () {
+    control.sendkeyMessage("LEFT",true);
   });
   kd.UP.down(function () {
-    if(ws.readyState == 1){
-      ws.send("UP_1\n");
-    }
+    control.sendkeyMessage("UP",true);
   });
   kd.DOWN.down(function () {
-    if(ws.readyState == 1){
-      ws.send("DOWN_1\n");
-    }
+    control.sendkeyMessage("DOWN",true);
   });
   kd.RIGHT.down(function () {
-    if(ws.readyState == 1){
-      ws.send("RIGHT_1\n");
-    }
+    control.sendkeyMessage("RIGHT",true);
   });
   kd.S.down(function () {
-    console.log("FIRE_1");
-    if(ws.readyState == 1){
-      ws.send("FIRE_1\n");
-    }
+    control.sendkeyMessage("FIRE",true);
   });
 
+  //release key 
   kd.LEFT.up(function () {
-    if(ws.readyState == 1){
-      ws.send("LEFT_0\n");
-    }
+    control.sendkeyMessage("LEFT",false);
   });
   kd.UP.up(function () {
-    if(ws.readyState == 1){
-      ws.send("UP_0\n");
-    }
+    control.sendkeyMessage("UP",false);
   });
   kd.DOWN.up(function () {
-    if(ws.readyState == 1){
-      ws.send("DOWN_0\n");
-    }
+    control.sendkeyMessage("DOWN",false);
   });
   kd.RIGHT.up(function () {
-    if(ws.readyState == 1){
-      ws.send("RIGHT_0\n");
-    }
+    control.sendkeyMessage("RIGHT",false);
   });
   kd.S.up(function () {
-    console.log("FIRE_0");
-    if(ws.readyState == 1){
-      ws.send("FIRE_0\n");
-    }
+    control.sendkeyMessage("FIRE",false);
   });
+
 
   </script>
 
