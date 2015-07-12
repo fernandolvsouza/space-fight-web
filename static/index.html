@@ -2,7 +2,8 @@
   <head>
     <style>
       body {
-          width: 1400;
+          width: 100%;
+          height: 100%;
           padding: 0;
           background-color: #fff;
           display: block;
@@ -13,14 +14,31 @@
       }
 
     </style>
-    <script src="./pixi.dev.js"></script>
-    <script src="./keydrown.min.js"></script>
-    
-   
+
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body>
+  <div id="myModal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        
+        <div class="modal-body">
+          <input id="player_name" type="text" class="form-control" placeholder="Name please...">
+          <br>
+          <button onClick="control.addPlayer()" style="width: 100%;" type="submit" class="btn btn-primary" data-dismiss="modal">Play</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
+
+  <script src="js/pixi.dev.js"></script>
+  <script src="js/keydrown.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
   <script>
+
+    $('#myModal').modal('show');
     var host = location.origin.replace(/^http/, 'ws')
     var ws = new WebSocket(host);
     var stream = null;
@@ -34,14 +52,15 @@
         }
       };
     };
+    
   </script>
   <script>
-
-    var graphics = []
+    //console.log(document.body.width);
+    var graphics = [];
     var scaleToPixel = 5;
     var fps = 60;
-    var width = 1400;
-    var height = 750;
+    var width = document.body.clientWidth;
+    var height = document.body.clientHeight;
 
     // create an new instance of a pixi stage
     var stage = new PIXI.Stage(0x000000);
@@ -72,7 +91,9 @@
           for (var i = 0; i < gamestate.bots.length; i++) {
             drawShip(gamestate.bots[i],stage,graphics);
           }
-          drawShip(gamestate.player,stage,graphics);
+          for (var i = 0; i < gamestate.player.length; i++) {
+            drawShip(gamestate.player[i],stage,graphics);
+          }
         }
       
         renderer.render(stage);
@@ -140,61 +161,74 @@
   </script>
 
   <script>
-  function EventControl(ws){
+ 
+    function EventControl(ws){
     
-    this.ws = ws;
+      this.ws = ws;
+      this.kd = kd;
 
-    this.sendkeyMessage = function (key,pressed){
-      this.sendObject({event: key, pressed: pressed });  
-    }
-
-    this.sendNewPlayerMessage = function (){
-      this.sendObject({event: "NEW_PLAYER"});
-    }
-
-    this.sendObject = function(obj){
-      console.log("sendObject" +  obj);
-      if(this.ws.readyState == 1){
-        this.ws.send(JSON.stringify(obj)+ "\n")
+      this.sendEvent = function (type,payload){
+        var json = {event: type}
+        if(payload){
+          json["payload"] = payload;
+        }
+        this.sendObject(json);  
       }
-    }
+
+      this.sendObject = function(obj){
+        console.log("sendObject");
+        console.log(obj);
+        if(this.ws.readyState == 1){
+          this.ws.send(JSON.stringify(obj)+ "\n")
+        }
+      }
+
+      this.addPlayer = function(){
+        this.player = document.getElementById("player_name").value;
+        this.sendEvent('NEW_PLAYER',{"user":{"name":this.player}})
+        this.onNewPlayer(this.kd);
+      }
+
+    } 
+
+  var control = new EventControl(ws,kd)
+
+  control.onNewPlayer = function(kd){
+
+    //key pressed
+    kd.LEFT.down(function () {
+      control.sendEvent("LEFT",{pressed: true});
+    });
+    kd.UP.down(function () {
+      control.sendEvent("UP",{pressed: true});
+    });
+    kd.DOWN.down(function () {
+      control.sendEvent("DOWN",{pressed: true});
+    });
+    kd.RIGHT.down(function () {
+      control.sendEvent("RIGHT",{pressed: true});
+    });
+    kd.S.down(function () {
+      control.sendEvent("FIRE",{pressed: true});
+    });
+
+    //release key 
+    kd.LEFT.up(function () {
+      control.sendEvent("LEFT",{pressed: false});
+    });
+    kd.UP.up(function () {
+      control.sendEvent("UP",{pressed: false});
+    });
+    kd.DOWN.up(function () {
+      control.sendEvent("DOWN",{pressed: false});
+    });
+    kd.RIGHT.up(function () {
+      control.sendEvent("RIGHT",{pressed: false});
+    });
+    kd.S.up(function () {
+      control.sendEvent("FIRE",{pressed: false});
+    });
   }
-
-  var control = new EventControl(ws);
-
-  //key pressed
-  kd.LEFT.down(function () {
-    control.sendkeyMessage("LEFT",true);
-  });
-  kd.UP.down(function () {
-    control.sendkeyMessage("UP",true);
-  });
-  kd.DOWN.down(function () {
-    control.sendkeyMessage("DOWN",true);
-  });
-  kd.RIGHT.down(function () {
-    control.sendkeyMessage("RIGHT",true);
-  });
-  kd.S.down(function () {
-    control.sendkeyMessage("FIRE",true);
-  });
-
-  //release key 
-  kd.LEFT.up(function () {
-    control.sendkeyMessage("LEFT",false);
-  });
-  kd.UP.up(function () {
-    control.sendkeyMessage("UP",false);
-  });
-  kd.DOWN.up(function () {
-    control.sendkeyMessage("DOWN",false);
-  });
-  kd.RIGHT.up(function () {
-    control.sendkeyMessage("RIGHT",false);
-  });
-  kd.S.up(function () {
-    control.sendkeyMessage("FIRE",false);
-  });
 
 
   </script>
@@ -225,5 +259,6 @@
         };
 }());
   </script>
+
   </body>
 </html>
