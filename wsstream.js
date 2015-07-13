@@ -18,7 +18,9 @@ module.exports.createServer = function(server,iserver) {
 			for(var index in clients){
 				if(clients[index].id ==  this.id){
 					clients.splice(index,1);
-					iserver.broadcast({event:"REMOVE_PLAYER",payload:{user:this.player}})
+					if(this.player){
+						iserver.broadcast({event:"REMOVE_PLAYER",payload:{user:this.player}})
+					}
 					console.log("client out :: number of clients = " + clients.length);	
 				}
 			}
