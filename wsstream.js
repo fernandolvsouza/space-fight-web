@@ -52,12 +52,14 @@ module.exports.createServer = function(server,iserver) {
 	});
 
 	wss.broadcast  = function(data){
-		/*console.log("broadcast to websockets : ")
-		console.log(data.toString())
-		console.log("clients size = " + clients.length)*/
+		var json = JSON.parse(data.toString())
 		for (var i=0; i < clients.length; i++) {
 			if(clients[i].readyState == 1){
-				clients[i].send(data.toString());
+				var msgToPlayer = json
+				if(clients[i].player){
+					msgToPlayer.player = clients[i].player 
+				}
+				clients[i].send(JSON.stringify(msgToPlayer));
 			}
 		}
 	}

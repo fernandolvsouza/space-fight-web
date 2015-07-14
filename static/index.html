@@ -9,9 +9,6 @@
           display: block;
           margin: 0 auto;
       }
-      body canvas{
-          margin: 0 auto;
-      }
 
     </style>
 
@@ -42,6 +39,7 @@
     var host = location.origin.replace(/^http/, 'ws')
     var ws = new WebSocket(host);
     var stream = null;
+    var player = null;
 
     ws.onmessage = function (event) {
       var datas =  event.data.split('\n');
@@ -57,16 +55,24 @@
   <script>
     //console.log(document.body.width);
     var graphics = [];
-    var scaleToPixel = 5;
+    var scaleToPixel = 20;
     var fps = 60;
     var width = document.body.clientWidth;
     var height = document.body.clientHeight;
 
     // create an new instance of a pixi stage
     var stage = new PIXI.Stage(0x000000);
+    var background = PIXI.Texture.fromImage("space.png");
+    var movingbg = new PIXI.TilingSprite(background, width, height);
+
+    movingbg.position.x = 0;
+    movingbg.position.y = 0;
+    movingbg.tilePosition.x = 0;
+    movingbg.tilePosition.y = 0;
+    stage.addChild(movingbg);
 
     // create a renderer instance.
-    var renderer = PIXI.autoDetectRenderer(width, height);
+    var renderer = PIXI.autoDetectRenderer(width, height,{ transparent: true });
 
     // add the renderer view element to the DOM
     document.body.appendChild(renderer.view);
@@ -87,15 +93,30 @@
       setTimeout(function() {
         requestAnimFrame(update);
         var gamestate = stream;
+        //console.log(gamestate)
         if(gamestate){
+          
+          //finding player
+          if(gamestate.player){
+            for (var i = 0; i < gamestate.players.length; i++) {
+                if(gamestate.players[i].id == gamestate.player.id){
+                  player = gamestate.players[i]                
+                  //console.log(player)
+                }
+            }
+            movingbg.tilePosition.x = -(player.x*scaleToPixel)
+            movingbg.tilePosition.y = (player.y*scaleToPixel)
+          }
+
           for (var i = 0; i < gamestate.bots.length; i++) {
             drawShip(gamestate.bots[i],stage,graphics);
           }
-          for (var i = 0; i < gamestate.player.length; i++) {
-            drawShip(gamestate.player[i],stage,graphics);
+          for (var i = 0; i < gamestate.players.length; i++) {
+            drawShip(gamestate.players[i],stage,graphics);
           }
+
         }
-      
+        
         renderer.render(stage);
       }, 1000 / fps);
 
@@ -103,11 +124,11 @@
     }
 
     function convertX(x){
-      return (x*scaleToPixel)+width/2;
+      return ((x-Number(player.x))*scaleToPixel)+width/2 ;
     }
 
     function convertY(y){
-      return (-y*scaleToPixel)+height/2;
+      return (-(y-Number(player.y))*scaleToPixel)+height/2;
     }
     
     function drawShip(ship,stage,graphics){
@@ -122,8 +143,8 @@
         [-1,2, -1,-2, 1,0]
       ];
       
-      g.lineStyle(1, 0xffd900, 1);
-      g.beginFill(0x5D0776);
+      g.lineStyle(1, 0xFFFF00, 1);
+      g.beginFill(0xFFFF00);
 
       for (var j = 0; j < paths.length; j++) {
         var path = paths[j];
