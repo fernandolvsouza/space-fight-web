@@ -7,7 +7,12 @@ module.exports.createServer = function(wsserver){
 
 	var oserver = net.createServer(function (socket) {
 		socket.on('data', function(data) {
-			wsserver.broadcast(data)
+			var msgs = data.toString().split('\n') // more than one json object together
+			for(var i in msgs){
+				if(msgs[i].length > 0){
+					wsserver.broadcast(msgs[i])
+				}
+			}
 		});
 	});
 

@@ -52,7 +52,11 @@ module.exports.createServer = function(server,iserver) {
 	});
 
 	wss.broadcast  = function(data){
+		console.log(data.toString())
+		console.log("separator")
+
 		var json = JSON.parse(data.toString())
+
 		for (var i=0; i < clients.length; i++) {
 			if(clients[i].readyState == 1){
 				var msgToPlayer = json
