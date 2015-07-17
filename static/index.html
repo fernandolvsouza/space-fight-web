@@ -5,7 +5,7 @@
           width: 100%;
           height: 100%;
           padding: 0;
-          background-color: #fff;
+          background-color: black !important;
           display: block;
           margin: 0 auto;
       }
@@ -29,7 +29,7 @@
   </div><!-- /.modal -->
 
 
-  <script src="js/pixi.dev.js"></script>
+  <script src="js/pixi.js"></script>
   <script src="js/keydrown.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script src="js/bootstrap.min.js"></script>
@@ -55,16 +55,20 @@
   <script>
     //console.log(document.body.width);
     var graphics = [];
-    var scaleToPixel = 20;
+    var scaleToPixel = 15;
     var fps = 60;
-    var width = document.body.clientWidth;
-    var height = document.body.clientHeight;
+    var width = $(document).width();
+    var height = $(document).height();  
+
+    console.log(PIXI.BaseTexture)
+
+    PIXI.SCALE_MODES.DEFAULT = PIXI.SCALE_MODES.NEAREST;
 
     // create an new instance of a pixi stage
     var stage = new PIXI.Stage(0x000000);
-    var background = PIXI.Texture.fromImage("space.png");
-    var movingbg = new PIXI.TilingSprite(background, width, height);
-
+    var background = PIXI.Texture.fromImage("grid_300x300.png");
+    var movingbg = new PIXI.extras.TilingSprite(background, width, height);
+    
     movingbg.position.x = 0;
     movingbg.position.y = 0;
     movingbg.tilePosition.x = 0;
@@ -74,15 +78,24 @@
     // create a renderer instance.
     var renderer = PIXI.autoDetectRenderer(width, height,{ transparent: true });
 
+    renderer.view.style.display = "block";
+    renderer.view.style.width = "100%"
+    renderer.view.style.height = "100%"
+
     // add the renderer view element to the DOM
     document.body.appendChild(renderer.view);
    
-    requestAnimFrame(update);
+    requestAnimationFrame(update);
 
     var b = new PIXI.Graphics();
     stage.addChild(b);
 
     function update() {
+    
+      movingbg.width = $(document).width() ;
+      movingbg.height = $(document).height() ;  
+      //console.log(width + "x" + height);
+
       kd.tick();
       b.clear();
       for (var i = 0; i < graphics.length; i++) {
@@ -91,7 +104,7 @@
       };
       graphics = [];
       setTimeout(function() {
-        requestAnimFrame(update);
+        requestAnimationFrame(update);
         var gamestate = stream;
         //console.log(gamestate)
         if(gamestate){
