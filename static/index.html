@@ -8,6 +8,18 @@
           background-color: black !important;
           display: block;
           margin: 0 auto;
+          overflow: hidden;
+      }
+
+      .radar{
+        width:300px;
+        height:200px;
+        position: absolute;
+        top:20px;
+        right:20px;
+        background-color: transparent;
+        border: 1px solid;
+        border-color: #006600;
       }
 
     </style>
@@ -15,6 +27,7 @@
     <link href="/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body>
+  <div id="container">
   <div id="myModal" class="modal fade">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -28,8 +41,12 @@
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
 
+  <div class="radar">
+  </div>
+
 
   <script src="js/pixi.js"></script>
+  <script src="js/fpsmeter.min.js"></script>
   <script src="js/keydrown.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script src="js/bootstrap.min.js"></script>
@@ -53,19 +70,20 @@
     
   </script>
   <script>
+
+    var meter = new FPSMeter();
+
     //console.log(document.body.width);
     var graphics = [];
     var scaleToPixel = 15;
-    var fps = 60;
-    var width = $(document).width();
-    var height = $(document).height();  
+    var radarScaleToPixel = 1;
+    var resize_ratio = 1
+    var defaultWidth = width = $(document).width();
+    var defaultHeight = height = $(document).height();  
 
-    console.log(PIXI.BaseTexture)
-
-    PIXI.SCALE_MODES.DEFAULT = PIXI.SCALE_MODES.NEAREST;
 
     // create an new instance of a pixi stage
-    var stage = new PIXI.Stage(0x000000);
+    var stage = new PIXI.Container();
     var background = PIXI.Texture.fromImage("grid_300x300.png");
     var movingbg = new PIXI.extras.TilingSprite(background, width, height);
     
@@ -76,64 +94,71 @@
     stage.addChild(movingbg);
 
     // create a renderer instance.
+    //var renderer = new PIXI.CanvasRenderer(width, height,{ transparent: true });
     var renderer = PIXI.autoDetectRenderer(width, height,{ transparent: true });
-
-    renderer.view.style.display = "block";
-    renderer.view.style.width = "100%"
-    renderer.view.style.height = "100%"
 
     // add the renderer view element to the DOM
     document.body.appendChild(renderer.view);
-   
-    requestAnimationFrame(update);
 
     var b = new PIXI.Graphics();
     stage.addChild(b);
 
+    window.addEventListener('resize', rescale, false);
+
+    update()
+
+    function rescale() {
+      width = defaultWidth * window.innerWidth/defaultWidth;
+      height = defaultHeight *  window.innerHeight/defaultHeight;
+      renderer.resize(width, height);
+      movingbg.width = width
+      movingbg.height = height;
+    }
+
     function update() {
-    
-      movingbg.width = $(document).width() ;
-      movingbg.height = $(document).height() ;  
-      //console.log(width + "x" + height);
+      meter.tick();
+
+      requestAnimationFrame(update);
 
       kd.tick();
       b.clear();
+
       for (var i = 0; i < graphics.length; i++) {
         graphics[i].clear();
         graphics[i] = null;
       };
       graphics = [];
-      setTimeout(function() {
-        requestAnimationFrame(update);
-        var gamestate = stream;
-        //console.log(gamestate)
-        if(gamestate){
-          
-          //finding player
-          if(gamestate.player){
-            for (var i = 0; i < gamestate.players.length; i++) {
-                if(gamestate.players[i].id == gamestate.player.id){
-                  player = gamestate.players[i]                
-                  //console.log(player)
-                }
-            }
-            movingbg.tilePosition.x = -(player.x*scaleToPixel)
-            movingbg.tilePosition.y = (player.y*scaleToPixel)
-          }
 
-          for (var i = 0; i < gamestate.bots.length; i++) {
-            drawShip(gamestate.bots[i],stage,graphics);
-          }
-          for (var i = 0; i < gamestate.players.length; i++) {
-            drawShip(gamestate.players[i],stage,graphics);
-          }
-
-        }
+      var gamestate = stream;
+      //console.log(gamestate)
+      if(gamestate){
         
-        renderer.render(stage);
-      }, 1000 / fps);
+        //finding player
+        if(gamestate.player){
+          for (var i = 0; i < gamestate.players.length; i++) {
+              if(gamestate.players[i].id == gamestate.player.id){
+                player = gamestate.players[i]                
+                //console.log(player)
+              }
+          }
+          movingbg.tilePosition.x = -(player.x*scaleToPixel)
+          movingbg.tilePosition.y = (player.y*scaleToPixel)
+        }
+        // drawing bots
+        for (var i = 0; i < gamestate.bots.length; i++) {
+          drawShip(gamestate.bots[i],stage,graphics);
+        }
 
-     
+        // drawing players
+        for (var i = 0; i < gamestate.players.length; i++) {
+          drawShip(gamestate.players[i],stage,graphics);
+        }
+
+      }
+      //render
+      //_applyRatio(stage,resize_ratio);
+      renderer.render(stage);
+      //_applyRatio(stage,1/resize_ratio);
     }
 
     function convertX(x){
@@ -152,12 +177,12 @@
       var g = new PIXI.Graphics();
       
       var paths = [
-        [-1,1, -1,-1, 3,0],
-        [-1,2, -1,-2, 1,0]
+        [-1,2, -1,-2, 1,0],
+        [-1,1, -1,-1, 3,0]
       ];
       
-      g.lineStyle(1, 0xFFFF00, 1);
-      g.beginFill(0xFFFF00);
+      g.lineStyle(1, 0x000000, 1);
+      g.beginFill(0x006600);
 
       for (var j = 0; j < paths.length; j++) {
         var path = paths[j];
@@ -184,8 +209,8 @@
         ship.bullets[i].x = Number(ship.bullets[i].x);
         ship.bullets[i].y = Number(ship.bullets[i].y);
         var radius = 0.5;        
-        b.lineStyle(1, 0xffd900, 1);
-        b.beginFill(0x5D0776);
+        b.lineStyle(1, 0x000000, 1);
+        b.beginFill(0x006600);
         b.drawCircle(convertX(ship.bullets[i].x),convertY(ship.bullets[i].y),radius * scaleToPixel);
         b.endFill();
       }
@@ -220,55 +245,58 @@
       this.addPlayer = function(){
         this.player = document.getElementById("player_name").value;
         this.sendEvent('NEW_PLAYER',{"user":{"name":this.player}})
-        this.onNewPlayer(this.kd);
+        this.onNewPlayer();
+      }
+
+      this.onNewPlayer = function(){
+
+        var _this = this
+        //key pressed
+        this.kd.LEFT.down(function () {
+          _this.sendEvent("LEFT",{pressed: true});
+        });
+        this.kd.UP.down(function () {
+          _this.sendEvent("UP",{pressed: true});
+        });
+        this.kd.DOWN.down(function () {
+          _this.sendEvent("DOWN",{pressed: true});
+        });
+        this.kd.RIGHT.down(function () {
+          _this.sendEvent("RIGHT",{pressed: true});
+        });
+        this.kd.S.down(function () {
+          _this.sendEvent("FIRE",{pressed: true});
+        });
+
+        //release key 
+        this.kd.LEFT.up(function () {
+          _this.sendEvent("LEFT",{pressed: false});
+        });
+        this.kd.UP.up(function () {
+          _this.sendEvent("UP",{pressed: false});
+        });
+        this.kd.DOWN.up(function () {
+          _this.sendEvent("DOWN",{pressed: false});
+        });
+        this.kd.RIGHT.up(function () {
+          _this.sendEvent("RIGHT",{pressed: false});
+        });
+        this.kd.S.up(function () {
+          _this.sendEvent("FIRE",{pressed: false});
+        });
       }
 
     } 
 
   var control = new EventControl(ws,kd)
 
-  control.onNewPlayer = function(kd){
-
-    //key pressed
-    kd.LEFT.down(function () {
-      control.sendEvent("LEFT",{pressed: true});
-    });
-    kd.UP.down(function () {
-      control.sendEvent("UP",{pressed: true});
-    });
-    kd.DOWN.down(function () {
-      control.sendEvent("DOWN",{pressed: true});
-    });
-    kd.RIGHT.down(function () {
-      control.sendEvent("RIGHT",{pressed: true});
-    });
-    kd.S.down(function () {
-      control.sendEvent("FIRE",{pressed: true});
-    });
-
-    //release key 
-    kd.LEFT.up(function () {
-      control.sendEvent("LEFT",{pressed: false});
-    });
-    kd.UP.up(function () {
-      control.sendEvent("UP",{pressed: false});
-    });
-    kd.DOWN.up(function () {
-      control.sendEvent("DOWN",{pressed: false});
-    });
-    kd.RIGHT.up(function () {
-      control.sendEvent("RIGHT",{pressed: false});
-    });
-    kd.S.up(function () {
-      control.sendEvent("FIRE",{pressed: false});
-    });
-  }
+  
 
 
   </script>
 
   <script>
-    (function() {
+    /*(function() {
     var lastTime = 0;
     var vendors = ['ms', 'moz', 'webkit', 'o'];
     for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
@@ -291,8 +319,8 @@
         window.cancelAnimationFrame = function(id) {
             clearTimeout(id);
         };
-}());
+}());*/
   </script>
-
+  </div>
   </body>
 </html>
