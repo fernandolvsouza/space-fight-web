@@ -122,7 +122,8 @@
 
       kd.tick();
       b.clear();
-
+      
+      console.log("graphics:"+graphics.length)
       for (var i = 0; i < graphics.length; i++) {
         graphics[i].clear();
         graphics[i] = null;
@@ -162,11 +163,11 @@
     }
 
     function convertX(x){
-      return ((x-Number(player.x))*scaleToPixel)+width/2 ;
+      return ((x-Number(player != null? player.x : 0))*scaleToPixel)+width/2 ;
     }
 
     function convertY(y){
-      return (-(y-Number(player.y))*scaleToPixel)+height/2;
+      return (-(y-Number(player != null ? player.y : 0))*scaleToPixel)+height/2;
     }
     
     function drawShip(ship,stage,graphics){
