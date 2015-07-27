@@ -74,7 +74,7 @@
     var meter = new FPSMeter();
 
     //console.log(document.body.width);
-    var graphics = [];
+    var sprites = {};
     var scaleToPixel = 15;
     var radarScaleToPixel = 1;
     var resize_ratio = 1
@@ -84,6 +84,7 @@
 
     // create an new instance of a pixi stage
     var stage = new PIXI.Container();
+    var shipTexture = PIXI.Texture.fromImage("ship_texture.png");
     var background = PIXI.Texture.fromImage("grid_300x300.png");
     var movingbg = new PIXI.extras.TilingSprite(background, width, height);
     
@@ -123,13 +124,15 @@
       kd.tick();
       b.clear();
       
-      console.log("graphics:"+graphics.length)
+      console.log("sprites:")
+      console.log(sprites);
+      /*
       for (var i = 0; i < graphics.length; i++) {
-        graphics[i].clear();
+        //graphics[i].clear();
         graphics[i] = null;
       };
       graphics = [];
-
+      */
       var gamestate = stream;
       //console.log(gamestate)
       if(gamestate){
@@ -147,12 +150,12 @@
         }
         // drawing bots
         for (var i = 0; i < gamestate.bots.length; i++) {
-          drawShip(gamestate.bots[i],stage,graphics);
+          drawShip(gamestate.bots[i],stage,sprites);
         }
 
         // drawing players
         for (var i = 0; i < gamestate.players.length; i++) {
-          drawShip(gamestate.players[i],stage,graphics);
+          drawShip(gamestate.players[i],stage,sprites);
         }
 
       }
@@ -170,41 +173,62 @@
       return (-(y-Number(player != null ? player.y : 0))*scaleToPixel)+height/2;
     }
     
-    function drawShip(ship,stage,graphics){
+    function drawShip(ship,stage,sprites){
       ship.x = Number(ship.x);
       ship.y = Number(ship.y);
       ship.angle = Number(ship.angle);
 
-      var g = new PIXI.Graphics();
+      var debug=true
+      if(debug){
       
-      var paths = [
-        [-1,2, -1,-2, 1,0],
-        [-1,1, -1,-1, 3,0]
-      ];
-      
-      g.lineStyle(1, 0x000000, 1);
-      g.beginFill(0x006600);
-
-      for (var j = 0; j < paths.length; j++) {
-        var path = paths[j];
-        for (var i = 0; i < path.length; i++) {
-          if(i % 2 == 0){
-            path[i] = convertX(ship.x + path[i]);
-          }else{
-            path[i] = convertY(ship.y + path[i]);
+        var paths = [
+          [-1,2, -1,-2, 1,0],
+          [-1,1, -1,-1, 3,0]
+        ];
+        
+        for (var j = 0; j < paths.length; j++) {
+          var path = paths[j];
+          for (var i = 0; i < path.length; i++) {
+            if(i % 2 == 0){
+              path[i] = convertX(ship.x + path[i]);
+            }else{
+              path[i] = convertY(ship.y + path[i]);
+            }
           }
         }
+        var g = new PIXI.Graphics() ;
+        g.lineStyle(1, 0x000000, 1);
+        g.beginFill(0x006600);
+        g.drawPolygon(paths[0]);
+        g.drawPolygon(paths[1]);
+        g.endFill();
+        g.position.x = convertX(ship.x);
+        g.position.y = convertY(ship.y);
+        g.rotation = -ship.angle;
+        g.pivot = new PIXI.Point(convertX(ship.x),convertY(ship.y));
+        stage.addChild(g);
+        console.log(g.width)
+        console.log(g.height)
+        console.log(62/4)
       }
 
-      g.drawPolygon(paths[0]);
-      g.drawPolygon(paths[1]);
-      g.endFill();
+      var sprite = null
+      if(sprites[ship.id]){
+        sprite = sprites[ship.id];
+      }else{
+        sprite = new PIXI.Sprite(shipTexture) ;
+        sprites[ship.id] = sprite;
+        stage.addChild(sprite);
+      }
+        
+      sprite.width = sprite.height = 4 * scaleToPixel
 
-      g.pivot = new PIXI.Point(convertX(ship.x),convertY(ship.y));
-      g.position.x = convertX(ship.x);
-      g.position.y = convertY(ship.y);
-      g.rotation = -ship.angle;
-      stage.addChild(g);
+      sprite.anchor.x = 0.5;
+      sprite.anchor.y = 0.5;
+      sprite.position.x = convertX(ship.x);
+      sprite.position.y = convertY(ship.y + 1) ;
+      sprite.rotation = -ship.angle + Math.PI/2;
+
 
       for (var i = 0; i < ship.bullets.length; i++) {
         ship.bullets[i].x = Number(ship.bullets[i].x);
@@ -215,7 +239,6 @@
         b.drawCircle(convertX(ship.bullets[i].x),convertY(ship.bullets[i].y),radius * scaleToPixel);
         b.endFill();
       }
-      graphics.push(g);
     }
 
   </script>
