@@ -52,8 +52,8 @@ module.exports.createServer = function(server,iserver) {
 	});
 
 	wss.broadcast  = function(data){
-		console.log(data.toString())
-		console.log("separator")
+		//console.log(data.toString())
+		//console.log("separator")
 
 		var json = JSON.parse(data.toString())
 

@@ -20,6 +20,7 @@
         background-color: transparent;
         border: 1px solid;
         border-color: #006600;
+        overflow: hidden;
       }
 
       .circle {
@@ -84,7 +85,7 @@
     //console.log(document.body.width);
     var ships = {};
     var scaleToPixel = 15;
-    var radarScaleToPixel = 1;
+    var radarScaleToPixel = 2;
     var resize_ratio = 1
     var defaultWidth = width = $(document).width();
     var defaultHeight = height = $(document).height();  
@@ -172,10 +173,6 @@
       h = h ? h : height;
       return (-(y-Number(player != null ? player.y : 0))*scale)+h/2;
     }
-    
-    function drawToRadar(ship){
-
-    }
 
     function drawShip(ship,stage,ships){
       ship.x = Number(ship.x);
@@ -231,8 +228,8 @@
       }
 
       var radarContainer = document.getElementById('radar');
-      radar.style.top = convertY(ship.y,1,radarContainer.clientHeight);
-      radar.style.left = convertX(ship.x,1,radarContainer.clientWidth);
+      radar.style.top = convertY(ship.y,radarScaleToPixel,radarContainer.clientHeight);
+      radar.style.left = convertX(ship.x,radarScaleToPixel,radarContainer.clientWidth);
        
       sprite.width = sprite.height = 4 * scaleToPixel
       sprite.anchor.x = 0.5;
