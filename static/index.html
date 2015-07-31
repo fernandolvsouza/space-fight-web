@@ -80,179 +80,172 @@
   </script>
   <script>
 
-    var meter = new FPSMeter();
+    function Game(kd,meter){
+      this.kd = kd;
+      this.meter = meter;
 
-    //console.log(document.body.width);
-    var ships = {};
-    var scaleToPixel = 15;
-    var radarScaleToPixel = 2;
-    var resize_ratio = 1
-    var defaultWidth = width = $(document).width();
-    var defaultHeight = height = $(document).height();  
+      //console.log(document.body.width);
+      this.ships = {};
+      this.scaleToPixel = 15;
+      this.radarScaleToPixel = 2;
+      this.defaultWidth = this.width = $(document).width();
+      this.defaultHeight = this.height = $(document).height();  
 
 
-    // create an new instance of a pixi stage
-    var stage = new PIXI.Container();
-    var shipTexture = PIXI.Texture.fromImage("ship_texture.png");
-    var background = PIXI.Texture.fromImage("grid_300x300.png");
-    var movingbg = new PIXI.extras.TilingSprite(background, width, height);
-    
-    movingbg.position.x = 0;
-    movingbg.position.y = 0;
-    movingbg.tilePosition.x = 0;
-    movingbg.tilePosition.y = 0;
-    stage.addChild(movingbg);
+      // create an new instance of a pixi stage
+      this.stage = new PIXI.Container();
+      this.shipTexture = PIXI.Texture.fromImage("ship_texture.png");
+      var background = PIXI.Texture.fromImage("grid_300x300.png");
+      this.movingbg = new PIXI.extras.TilingSprite(background, this.width, this.height);
+      // create a renderer instance.
+      this.renderer = PIXI.autoDetectRenderer(this.width, this.height,{ transparent: true });
+      this.graphics = new PIXI.Graphics();
 
-    // create a renderer instance.
-    var renderer = PIXI.autoDetectRenderer(width, height,{ transparent: true });
 
-    // add the renderer view element to the DOM
-    document.body.appendChild(renderer.view);
 
-    var b = new PIXI.Graphics();
-    stage.addChild(b);
+      this.movingbg.position.x = 0;
+      this.movingbg.position.y = 0;
+      this.movingbg.tilePosition.x = 0;
+      this.movingbg.tilePosition.y = 0;
+      this.stage.addChild(this.movingbg);
+      this.stage.addChild(this.graphics);
 
-    window.addEventListener('resize', rescale, false);
+      // add the renderer view element to the DOM
+      document.body.appendChild(this.renderer.view);
+      window.addEventListener('resize', this.rescale, false);
 
-    update()
-
-    function rescale() {
-      width = defaultWidth * window.innerWidth/defaultWidth;
-      height = defaultHeight *  window.innerHeight/defaultHeight;
-      renderer.resize(width, height);
-      movingbg.width = width
-      movingbg.height = height;
-    }
-
-    function update() {
-      meter.tick();
-
-      requestAnimationFrame(update);
-
-      kd.tick();
-      b.clear();
-    
-      var gamestate = stream;
-      if(gamestate){
-        
-        //finding player
-        if(gamestate.player){
-          for (var i = 0; i < gamestate.players.length; i++) {
-              if(gamestate.players[i].id == gamestate.player.id){
-                player = gamestate.players[i]                
-                //console.log(player)
-              }
-          }
-          if(player){
-            movingbg.tilePosition.x = -(player.x*scaleToPixel)
-            movingbg.tilePosition.y = (player.y*scaleToPixel)
-          }
-        }
-        // drawing bots
-        for (var i = 0; i < gamestate.bots.length; i++) {
-          drawShip(gamestate.bots[i],stage,ships);
-        }
-
-        // drawing players
-        for (var i = 0; i < gamestate.players.length; i++) {
-          drawShip(gamestate.players[i],stage,ships);
-        }
-
+      this.rescale = function() {
+        this.width = this.defaultWidth * window.innerWidth/this.defaultWidth;
+        this.height = this.defaultHeight *  window.innerHeight/this.defaultHeight;
+        this.enderer.resize(this.width, this.height);
+        this.movingbg.width = this.width
+        this.movingbg.height = this.height;
       }
-      renderer.render(stage);
-    }
 
-    function convertX(x,scale,w){
-      scale = scale ? scale : scaleToPixel;
-      w = w ? w : width;
-      return ((x-Number(player != null? player.x : 0))*scale)+w/2 ;
-    }
+      this.update = function(gamestate) {
+        this.meter.tick();
 
-    function convertY(y,scale,h){
-      scale = scale ? scale : scaleToPixel;
-      h = h ? h : height;
-      return (-(y-Number(player != null ? player.y : 0))*scale)+h/2;
-    }
-
-    function drawShip(ship,stage,ships){
-      ship.x = Number(ship.x);
-      ship.y = Number(ship.y);
-      ship.angle = Number(ship.angle);
-
-      var debug=false;
-      if(debug){
+        this.kd.tick();
+        this.graphics.clear();
       
-        var paths = [
-          [-1,2, -1,-2, 1,0],
-          [-1,1, -1,-1, 3,0]
-        ];
-        
-        for (var j = 0; j < paths.length; j++) {
-          var path = paths[j];
-          for (var i = 0; i < path.length; i++) {
-            if(i % 2 == 0){
-              path[i] = convertX(ship.x + path[i]);
-            }else{
-              path[i] = convertY(ship.y + path[i]);
+        if(gamestate){
+          
+          //finding player
+          if(gamestate.player){
+            for (var i = 0; i < gamestate.players.length; i++) {
+                if(gamestate.players[i].id == gamestate.player.id){
+                  this.player = gamestate.players[i]                
+                  //console.log(player)
+                }
+            }
+            if(this.player){
+              this.movingbg.tilePosition.x = -(this.player.x*this.scaleToPixel)
+              this.movingbg.tilePosition.y = (this.player.y*this.scaleToPixel)
             }
           }
+          // drawing bots
+          for (var i = 0; i < gamestate.bots.length; i++) {
+            this.drawShip(gamestate.bots[i],this.stage,this.ships,this.shipTexture);
+          }
+
+          // drawing players
+          for (var i = 0; i < gamestate.players.length; i++) {
+            this.drawShip(gamestate.players[i],this.stage,this.ships,this.shipTexture);
+          }
+
         }
-        var g = new PIXI.Graphics() ;
-        g.lineStyle(1, 0x000000, 1);
-        g.beginFill(0x006600);
-        g.drawPolygon(paths[0]);
-        g.drawPolygon(paths[1]);
-        g.endFill();
-        g.position.x = convertX(ship.x);
-        g.position.y = convertY(ship.y);
-        g.rotation = -ship.angle;
-        g.pivot = new PIXI.Point(convertX(ship.x),convertY(ship.y));
-        stage.addChild(g);
+        this.renderer.render(this.stage);
       }
 
-      var sprite = null
-      var radar = null
-      if(ships[ship.id]){
-        sprite = ships[ship.id].sprite;
-        radar = ships[ship.id].radar;
-      }else{
-        sprite = new PIXI.Sprite(shipTexture) ;
-        ships[ship.id] = {}
-        ships[ship.id].sprite = sprite;
-        stage.addChild(sprite);
-
-        radar = document.createElement("div");
-        radar.className = 'circle';
-        document.getElementById('radar').appendChild(radar);
-        ships[ship.id].radar = radar;
+      this.convertX = function(x,scale,w){
+        scale = scale ? scale : this.scaleToPixel;
+        w = w ? w : this.width;
+        return ((x-Number(this.player != null? this.player.x : 0))*scale)+w/2 ;
       }
 
-      var radarContainer = document.getElementById('radar');
-      radar.style.top = convertY(ship.y,radarScaleToPixel,radarContainer.clientHeight);
-      radar.style.left = convertX(ship.x,radarScaleToPixel,radarContainer.clientWidth);
-       
-      sprite.width = sprite.height = 4 * scaleToPixel
-      sprite.anchor.x = 0.5;
-      sprite.anchor.y = 0.75;
-      sprite.position.x = convertX(ship.x);
-      sprite.position.y = convertY(ship.y) ;
-      sprite.rotation = -ship.angle + Math.PI/2;
+      this.convertY = function(y,scale,h){
+        scale = scale ? scale : this.scaleToPixel;
+        h = h ? h : this.height;
+        return (-(y-Number(this.player != null ? this.player.y : 0))*scale)+h/2;
+      }
+
+      this.drawShip = function(ship,stage,ships,shipTexture){
+        ship.x = Number(ship.x);
+        ship.y = Number(ship.y);
+        ship.angle = Number(ship.angle);
+
+        var debug=false;
+        if(debug){
+        
+          var paths = [
+            [-1,2, -1,-2, 1,0],
+            [-1,1, -1,-1, 3,0]
+          ];
+          
+          for (var j = 0; j < paths.length; j++) {
+            var path = paths[j];
+            for (var i = 0; i < path.length; i++) {
+              if(i % 2 == 0){
+                path[i] = this.convertX(ship.x + path[i]);
+              }else{
+                path[i] = this.convertY(ship.y + path[i]);
+              }
+            }
+          }
+          var g = new PIXI.Graphics() ;
+          g.lineStyle(1, 0x000000, 1);
+          g.beginFill(0x006600);
+          g.drawPolygon(paths[0]);
+          g.drawPolygon(paths[1]);
+          g.endFill();
+          g.position.x = this.convertX(ship.x);
+          g.position.y = this.convertY(ship.y);
+          g.rotation = -ship.angle;
+          g.pivot = new PIXI.Point(this.convertX(ship.x),this.convertY(ship.y));
+          stage.addChild(g);
+        }
+
+        var sprite = null
+        var radar = null
+        if(ships[ship.id]){
+          sprite = ships[ship.id].sprite;
+          radar = ships[ship.id].radar;
+        }else{
+          sprite = new PIXI.Sprite(shipTexture) ;
+          ships[ship.id] = {}
+          ships[ship.id].sprite = sprite;
+          stage.addChild(sprite);
+
+          radar = document.createElement("div");
+          radar.className = 'circle';
+          document.getElementById('radar').appendChild(radar);
+          ships[ship.id].radar = radar;
+        }
+
+        var radarContainer = document.getElementById('radar');
+        radar.style.top = this.convertY(ship.y,this.radarScaleToPixel,radarContainer.clientHeight);
+        radar.style.left = this.convertX(ship.x,this.radarScaleToPixel,radarContainer.clientWidth);
+         
+        sprite.width = sprite.height = 4 * this.scaleToPixel
+        sprite.anchor.x = 0.5;
+        sprite.anchor.y = 0.75;
+        sprite.position.x = this.convertX(ship.x);
+        sprite.position.y = this.convertY(ship.y) ;
+        sprite.rotation = -ship.angle + Math.PI/2;
 
 
-      for (var i = 0; i < ship.bullets.length; i++) {
-        ship.bullets[i].x = Number(ship.bullets[i].x);
-        ship.bullets[i].y = Number(ship.bullets[i].y);
-        var radius = 0.5;        
-        b.lineStyle(1, 0x000000, 1);
-        b.beginFill(0x006600);
-        b.drawCircle(convertX(ship.bullets[i].x),convertY(ship.bullets[i].y),radius * scaleToPixel);
-        b.endFill();
+        for (var i = 0; i < ship.bullets.length; i++) {
+          ship.bullets[i].x = Number(ship.bullets[i].x);
+          ship.bullets[i].y = Number(ship.bullets[i].y);
+          var radius = 0.5;        
+          this.graphics.lineStyle(1, 0x000000, 1);
+          this.graphics.beginFill(0x006600);
+          this.graphics.drawCircle(this.convertX(ship.bullets[i].x),this.convertY(ship.bullets[i].y),radius * this.scaleToPixel);
+          this.graphics.endFill();
+        }
       }
     }
 
-  </script>
-
-  <script>
  
     function EventControl(ws){
     
@@ -322,8 +315,15 @@
     } 
 
   var control = new EventControl(ws,kd)
+  var game = new Game(kd,new FPSMeter())
 
+
+  var refreshFrame = function(){
+    game.update(stream);
+    requestAnimationFrame(refreshFrame)
+  }
   
+  refreshFrame()
 
 
   </script>
