@@ -118,43 +118,34 @@
         this.graphics.clear();
       
         if(gamestate){
-          
+          console.log("ships count: " + gamestate.ships.length);
           //finding player
           if(gamestate.player){
-            for (var i = 0; i < gamestate.players.length; i++) {
-                if(gamestate.players[i].id == gamestate.player.id){
-                  this.player = gamestate.players[i];
-                  if(this.onNewPlayer){
-                    this.onNewPlayer(this.player);
-                  }              
-                  //console.log(player)
-                }
+            if(!this.player){
+              if(this.onNewPlayer){
+                this.onNewPlayer(this.player);
+              }
             }
+            this.player = gamestate.player; // xy can change
+            gamestate.ships.push(gamestate.player);
           }
+      
           //moving background
+          //console.log(this.player)
           if(this.player){
-              this.movingbg.tilePosition.x = -(this.player.x*this.scaleToPixel)
-              this.movingbg.tilePosition.y = (this.player.y*this.scaleToPixel)
-            }
-
-          // drawing bots
-          for (var i = 0; i < gamestate.bots.length; i++) {
-            this.drawShip(gamestate.bots[i],this.stage,this.ships,this.shipTexture);
+            this.movingbg.tilePosition.x = -(this.player.x*this.scaleToPixel)
+            this.movingbg.tilePosition.y = (this.player.y*this.scaleToPixel)
           }
 
-          // drawing players
-          for (var i = 0; i < gamestate.players.length; i++) {
-            this.drawShip(gamestate.players[i],this.stage,this.ships,this.shipTexture);
+          // drawing ships
+          for (var i = 0; i < gamestate.ships.length; i++) {
+            this.drawShip(gamestate.ships[i],this.stage,this.ships,this.shipTexture);
           }
 
           //map ships easy access
           var shipsInGameState = {}
-          for (var i = 0; i < gamestate.bots.length; i++) {
-              shipsInGameState[Number(gamestate.bots[i].id)] = gamestate.bots[i];
-          }
-
-          for (var i = 0; i < gamestate.players.length; i++) {
-              shipsInGameState[Number(gamestate.players[i].id)] = gamestate.players[i];
+          for (var i = 0; i < gamestate.ships.length; i++) {
+              shipsInGameState[Number(gamestate.ships[i].id)] = gamestate.ships[i];
           }
           
 

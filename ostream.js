@@ -12,7 +12,7 @@ module.exports.createServer = function(wsserver){
 			data = data.toString()
 			for(var i in data){
 				if(data[i] == '\n'){
-					wsserver.broadcast(this.buffer)					
+					wsserver.sendDataToClient(this.buffer)					
 					this.buffer = ""
 				}else{
 					if(!this.buffer){
