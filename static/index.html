@@ -44,7 +44,7 @@
         <div class="modal-body">
           <input id="player_name" type="text" class="form-control" placeholder="Name please...">
           <br>
-          <button onClick="control.addPlayer()" style="width: 100%;" type="submit" class="btn btn-primary" data-dismiss="modal">Play</button>
+          <button onClick="eventsControl.addPlayer()" style="width: 100%;" type="submit" class="btn btn-primary" data-dismiss="modal">Play</button>
         </div>
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -65,7 +65,6 @@
     var host = location.origin.replace(/^http/, 'ws')
     var ws = new WebSocket(host);
     var stream = null;
-    var player = null;
 
     ws.onmessage = function (event) {
       var datas =  event.data.split('\n');
@@ -77,13 +76,8 @@
       };
     };
     
-  </script>
-  <script>
 
-    function Game(kd,meter){
-      this.kd = kd;
-      this.meter = meter;
-
+    function Game(){
       //console.log(document.body.width);
       this.ships = {};
       this.scaleToPixel = 15;
@@ -100,8 +94,6 @@
       // create a renderer instance.
       this.renderer = PIXI.autoDetectRenderer(this.width, this.height,{ transparent: true });
       this.graphics = new PIXI.Graphics();
-
-
 
       this.movingbg.position.x = 0;
       this.movingbg.position.y = 0;
@@ -123,9 +115,6 @@
       }
 
       this.update = function(gamestate) {
-        this.meter.tick();
-
-        this.kd.tick();
         this.graphics.clear();
       
         if(gamestate){
@@ -134,15 +123,20 @@
           if(gamestate.player){
             for (var i = 0; i < gamestate.players.length; i++) {
                 if(gamestate.players[i].id == gamestate.player.id){
-                  this.player = gamestate.players[i]                
+                  this.player = gamestate.players[i];
+                  if(this.onNewPlayer){
+                    this.onNewPlayer(this.player);
+                  }              
                   //console.log(player)
                 }
             }
-            if(this.player){
+          }
+          //moving background
+          if(this.player){
               this.movingbg.tilePosition.x = -(this.player.x*this.scaleToPixel)
               this.movingbg.tilePosition.y = (this.player.y*this.scaleToPixel)
             }
-          }
+
           // drawing bots
           for (var i = 0; i < gamestate.bots.length; i++) {
             this.drawShip(gamestate.bots[i],this.stage,this.ships,this.shipTexture);
@@ -153,6 +147,28 @@
             this.drawShip(gamestate.players[i],this.stage,this.ships,this.shipTexture);
           }
 
+          //map ships easy access
+          var shipsInGameState = {}
+          for (var i = 0; i < gamestate.bots.length; i++) {
+              shipsInGameState[Number(gamestate.bots[i].id)] = gamestate.bots[i];
+          }
+
+          for (var i = 0; i < gamestate.players.length; i++) {
+              shipsInGameState[Number(gamestate.players[i].id)] = gamestate.players[i];
+          }
+          
+
+          //erase ships
+          for(var id in this.ships){
+            if(!shipsInGameState[Number(id)]){
+              console.log("deleting id = " + id);
+              console.log(this.ships[id])
+              this.stage.removeChild(this.ships[id].sprite)
+              this.ships[id].sprite = null;
+              document.getElementById('radar').removeChild(this.ships[id].radar);
+              delete this.ships[id];
+            }
+          }
         }
         this.renderer.render(this.stage);
       }
@@ -261,20 +277,19 @@
       }
 
       this.sendObject = function(obj){
-        console.log("sendObject");
-        console.log(obj);
+        //console.log("sendObject");
+        //console.log(obj);
         if(this.ws.readyState == 1){
           this.ws.send(JSON.stringify(obj)+ "\n")
         }
       }
 
       this.addPlayer = function(){
-        this.player = document.getElementById("player_name").value;
-        this.sendEvent('NEW_PLAYER',{"user":{"name":this.player}})
-        this.onNewPlayer();
+        var player_name = document.getElementById("player_name").value;
+        this.sendEvent('NEW_PLAYER',{"user":{"name":player_name}})
       }
 
-      this.onNewPlayer = function(){
+      this.initPlayerEventListener = function(){
 
         var _this = this
         //key pressed
@@ -314,46 +329,26 @@
 
     } 
 
-  var control = new EventControl(ws,kd)
-  var game = new Game(kd,new FPSMeter())
+  var eventsControl = new EventControl(ws,kd);
+  var game = new Game();
+  var fps = new FPSMeter();
 
+
+  game.onNewPlayer = function(player){
+    eventsControl.initPlayerEventListener();
+  }
 
   var refreshFrame = function(){
     game.update(stream);
-    requestAnimationFrame(refreshFrame)
+    fps.tick();
+    kd.tick();
+    requestAnimationFrame(refreshFrame);
   }
   
-  refreshFrame()
-
+  refreshFrame();
 
   </script>
 
-  <script>
-    /*(function() {
-    var lastTime = 0;
-    var vendors = ['ms', 'moz', 'webkit', 'o'];
-    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
-        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
-        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
-                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
-    }
- 
-    if (!window.requestAnimationFrame)
-        window.requestAnimationFrame = function(callback, element) {
-            var currTime = new Date().getTime();
-            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
-              timeToCall);
-            lastTime = currTime + timeToCall;
-            return id;
-        };
- 
-    if (!window.cancelAnimationFrame)
-        window.cancelAnimationFrame = function(id) {
-            clearTimeout(id);
-        };
-}());*/
-  </script>
   </div>
   </body>
 </html>
