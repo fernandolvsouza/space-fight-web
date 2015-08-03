@@ -244,7 +244,7 @@
         for (var i = 0; i < ship.bullets.length; i++) {
           ship.bullets[i].x = Number(ship.bullets[i].x);
           ship.bullets[i].y = Number(ship.bullets[i].y);
-          var radius = 0.5;        
+          var radius = 0.2;        
           this.graphics.lineStyle(1, 0x000000, 1);
           this.graphics.beginFill(0x006600);
           this.graphics.drawCircle(this.convertX(ship.bullets[i].x),this.convertY(ship.bullets[i].y),radius * this.scaleToPixel);
