@@ -76,40 +76,86 @@
       };
     };
     
+    function CoordenateTranform(refpoint,scale,maxwidth,maxheight){
+      this.scale = scale;
+      this.maxwidth = maxwidth;
+      this.maxheight = maxheight;
+      this.refpoint = refpoint;
+
+      function norm(point){
+        return {  'x': point != null ? Number(point.x) : 0,
+                  'y': point != null ? Number(point.y) : 0
+        }
+      }
+
+      this.X = function(x){
+        return ((x-norm(this.refpoint).x)*this.scale)+this.maxwidth/2 ;
+      }
+
+      this.Y = function(y){
+        return (-(y-norm(this.refpoint).y)*this.scale)+this.maxheight/2;
+      }
+
+      this.unX = function(x){
+        return (x - maxwidth/2)/scale + norm(this.refpoint).x 
+      }
+
+      this.unY = function(y){
+        return (-y + maxwidth/2)/scale + norm(this.refpoint).y 
+      }
+    }
+
 
     function Game(){
-      //console.log(document.body.width);
+      this.mousepoint = {x:0,y:0};
       this.ships = {};
-      this.scaleToPixel = 15;
-      this.radarScaleToPixel = 2;
-      this.defaultWidth = this.width = $(document).width();
-      this.defaultHeight = this.height = $(document).height();  
+      
+      this.width = $(document).width();
+      this.height = $(document).height();  
 
 
       // create an new instance of a pixi stage
       this.stage = new PIXI.Container();
-      this.shipTexture = PIXI.Texture.fromImage("ship_texture.png");
-      var background = PIXI.Texture.fromImage("grid_300x300.png");
-      this.movingbg = new PIXI.extras.TilingSprite(background, this.width, this.height);
-      // create a renderer instance.
-      this.renderer = PIXI.autoDetectRenderer(this.width, this.height,{ transparent: true });
-      this.graphics = new PIXI.Graphics();
 
+
+      // create ship texture
+      this.shipTexture = PIXI.Texture.fromImage("ship_texture.png");
+
+      // create moving background
+      this.movingbg = new PIXI.extras.TilingSprite(
+        PIXI.Texture.fromImage("grid_300x300.png"), this.width, this.height);
       this.movingbg.position.x = 0;
       this.movingbg.position.y = 0;
       this.movingbg.tilePosition.x = 0;
       this.movingbg.tilePosition.y = 0;
+
+      // create graphics to bulltes TODO remove that
+      this.graphics = new PIXI.Graphics();
+
       this.stage.addChild(this.movingbg);
       this.stage.addChild(this.graphics);
+
+      
+      //create coordenate tranform for radar
+      var radarContainer = document.getElementById('radar');
+      this.radarCoordenate = new CoordenateTranform(null,2,radarContainer.clientWidth,
+        radarContainer.clientHeight);
+
+      //create coordenate tranform for stage
+      this.coordenate = new CoordenateTranform(null,15,this.width,this.height)
+
+
+      // create a renderer instance.
+      this.renderer = PIXI.autoDetectRenderer(this.width, this.height,{ transparent: true });
 
       // add the renderer view element to the DOM
       document.body.appendChild(this.renderer.view);
       window.addEventListener('resize', this.rescale, false);
 
       this.rescale = function() {
-        this.width = this.defaultWidth * window.innerWidth/this.defaultWidth;
-        this.height = this.defaultHeight *  window.innerHeight/this.defaultHeight;
-        this.enderer.resize(this.width, this.height);
+        this.width = this.width * window.innerWidth/this.width;
+        this.height = this.width *  window.innerHeight/this.width;
+        this.renderer.resize(this.width, this.height);
         this.movingbg.width = this.width
         this.movingbg.height = this.height;
       }
@@ -118,7 +164,7 @@
         this.graphics.clear();
       
         if(gamestate){
-          console.log("ships count: " + gamestate.ships.length);
+          //console.log("ships count: " + gamestate.ships.length);
           //finding player
           if(gamestate.player){
             if(!this.player){
@@ -126,15 +172,20 @@
                 this.onNewPlayer(this.player);
               }
             }
+            
             this.player = gamestate.player; // xy can change
+            
+            this.coordenate.refpoint = this.player;
+            this.radarCoordenate.refpoint = this.player;
+
             gamestate.ships.push(gamestate.player);
           }
       
           //moving background
           //console.log(this.player)
           if(this.player){
-            this.movingbg.tilePosition.x = -(this.player.x*this.scaleToPixel)
-            this.movingbg.tilePosition.y = (this.player.y*this.scaleToPixel)
+            this.movingbg.tilePosition.x = -(this.player.x*this.coordenate.scale)
+            this.movingbg.tilePosition.y = (this.player.y*this.coordenate.scale)
           }
 
           // drawing ships
@@ -160,20 +211,16 @@
               delete this.ships[id];
             }
           }
+
+          //send Mouse Position
+          var point = this.renderer.plugins.interaction.mouse.global;
+          if(this.mousepoint.x != point.x || this.mousepoint.y != point.y){
+            this.mousepoint.x = point.x;
+            this.mousepoint.y = point.y;
+            this.onMouseMove(this.coordenate.unX(this.mousepoint.x),this.coordenate.unY(this.mousepoint.y));  
+          }
         }
         this.renderer.render(this.stage);
-      }
-
-      this.convertX = function(x,scale,w){
-        scale = scale ? scale : this.scaleToPixel;
-        w = w ? w : this.width;
-        return ((x-Number(this.player != null? this.player.x : 0))*scale)+w/2 ;
-      }
-
-      this.convertY = function(y,scale,h){
-        scale = scale ? scale : this.scaleToPixel;
-        h = h ? h : this.height;
-        return (-(y-Number(this.player != null ? this.player.y : 0))*scale)+h/2;
       }
 
       this.drawShip = function(ship,stage,ships,shipTexture){
@@ -193,9 +240,9 @@
             var path = paths[j];
             for (var i = 0; i < path.length; i++) {
               if(i % 2 == 0){
-                path[i] = this.convertX(ship.x + path[i]);
+                path[i] = this.coordenate.X(ship.x + path[i]);
               }else{
-                path[i] = this.convertY(ship.y + path[i]);
+                path[i] = this.coordenate.Y(ship.y + path[i]);
               }
             }
           }
@@ -205,10 +252,10 @@
           g.drawPolygon(paths[0]);
           g.drawPolygon(paths[1]);
           g.endFill();
-          g.position.x = this.convertX(ship.x);
-          g.position.y = this.convertY(ship.y);
+          g.position.x = this.coordenate.X(ship.x);
+          g.position.y = this.coordenate.Y(ship.y);
           g.rotation = -ship.angle;
-          g.pivot = new PIXI.Point(this.convertX(ship.x),this.convertY(ship.y));
+          g.pivot = new PIXI.Point(this.coordenate.X(ship.x),this.coordenate.Y(ship.y));
           stage.addChild(g);
         }
 
@@ -230,14 +277,14 @@
         }
 
         var radarContainer = document.getElementById('radar');
-        radar.style.top = this.convertY(ship.y,this.radarScaleToPixel,radarContainer.clientHeight);
-        radar.style.left = this.convertX(ship.x,this.radarScaleToPixel,radarContainer.clientWidth);
+        radar.style.top = this.radarCoordenate.Y(ship.y);
+        radar.style.left = this.radarCoordenate.X(ship.x);
          
-        sprite.width = sprite.height = 4 * this.scaleToPixel
+        sprite.width = sprite.height = 4 * this.coordenate.scale
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.75;
-        sprite.position.x = this.convertX(ship.x);
-        sprite.position.y = this.convertY(ship.y) ;
+        sprite.position.x = this.coordenate.X(ship.x);
+        sprite.position.y = this.coordenate.Y(ship.y) ;
         sprite.rotation = -ship.angle + Math.PI/2;
 
 
@@ -247,7 +294,7 @@
           var radius = 0.2;        
           this.graphics.lineStyle(1, 0x000000, 1);
           this.graphics.beginFill(0x006600);
-          this.graphics.drawCircle(this.convertX(ship.bullets[i].x),this.convertY(ship.bullets[i].y),radius * this.scaleToPixel);
+          this.graphics.drawCircle(this.coordenate.X(ship.bullets[i].x),this.coordenate.Y(ship.bullets[i].y),radius * this.coordenate.scale);
           this.graphics.endFill();
         }
       }
@@ -327,6 +374,11 @@
 
   game.onNewPlayer = function(player){
     eventsControl.initPlayerEventListener();
+  }
+
+  game.onMouseMove = function(x,y){
+      console.log({'x':x,'y':y});
+    //eventsControl.sendEvent("MOUSE_POS",{'x':x,'y':y})
   }
 
   var refreshFrame = function(){
