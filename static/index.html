@@ -93,7 +93,7 @@
       }
 
       this.Y = function(y){
-        return (-(y-norm(this.refpoint).y)*this.scale)+this.maxheight/2;
+        return ((-y+norm(this.refpoint).y)*this.scale)+this.maxheight/2;
       }
 
       this.unX = function(x){
@@ -101,7 +101,7 @@
       }
 
       this.unY = function(y){
-        return (-y + maxwidth/2)/scale + norm(this.refpoint).y 
+        return (-y+maxheight/2)/scale +norm(this.refpoint).y 
       }
     }
 
@@ -183,7 +183,7 @@
       
           //moving background
           //console.log(this.player)
-          if(this.player){
+          if(this.player){            
             this.movingbg.tilePosition.x = -(this.player.x*this.coordenate.scale)
             this.movingbg.tilePosition.y = (this.player.y*this.coordenate.scale)
           }
@@ -218,6 +218,8 @@
             this.mousepoint.x = point.x;
             this.mousepoint.y = point.y;
             this.onMouseMove(this.coordenate.unX(this.mousepoint.x),this.coordenate.unY(this.mousepoint.y));  
+            console.log("player x,y: (" + this.player.x + "," + this.player.y + ")")
+            console.log("player2 x,y: (" + this.coordenate.unX(this.coordenate.X(this.player.x)) + "," + this.coordenate.unY(this.coordenate.Y(this.player.y)) + ")")
           }
         }
         this.renderer.render(this.stage);
@@ -378,7 +380,7 @@
 
   game.onMouseMove = function(x,y){
       console.log({'x':x,'y':y});
-    //eventsControl.sendEvent("MOUSE_POS",{'x':x,'y':y})
+      eventsControl.sendEvent("MOUSE_MOVE",{'x':x,'y':y})
   }
 
   var refreshFrame = function(){
