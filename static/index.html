@@ -105,55 +105,102 @@
       }
     }
 
-    function ShipRenderer(ships){
-      this.ships = ships;
+    function BulletPool(){
 
-      // create ship texture
-
-      this.bullets = {
+      //bullets
+      this.textures = {
         green: PIXI.Texture.fromImage("gbullet.png"),
         orange: PIXI.Texture.fromImage("obullet.png"),
         yellow: PIXI.Texture.fromImage("ybullet.png"),
         blue: PIXI.Texture.fromImage("bbullet.png")
       }
+
+      this.min = 30;
+      this.max = 100;
+      this.ids = 0;
+      this.sprites = []
       
-      this.render = function(ship,coordenate,radarCoordenate,stage,mousepoint){
+      this.getSprite = function(){
+        for(var i in this.sprites){
+          if(this.sprites[i].free){
+            this.sprites[i].free = false;
+            return this.sprites[i];
+          }
+        }
+
+        var sprite = new PIXI.Sprite(this.textures.green);
+        sprite.id = (this.ids++)-1;
+        sprite.free = false;
+        this.sprites.push(sprite);
+        this.obj[sprite.pos] = sprite;
+      }
+
+      this.releaseSprite = function(sprite){
+        sprite.free = true;
+        var index = this.sprites.indexOf(sprite);
+        if(index > -1){
+           this.sprites.splice(index, 1);  
+        }      
+        
+      }
+    }
+
+    function ShipRenderer(ships){
+      this.bulletpool = new  BulletPool();
+      this.ships = ships;
+
+      // create ship texture
+      this.render = function(shipupdate,coordenate,radarCoordenate,stage,mousepoint){
         var shipHandler;
 
-        if(ship.type == "circle"){
+        if(shipupdate.type == "circle"){
           shipHandler = new Circleship();
-        }else if(ship.type == "polygon"){
+        }else if(shipupdate.type == "polygon"){
           shipHandler = new Polygonship();
         }
 
-        ship.x = Number(ship.x);
-        ship.y = Number(ship.y);
-        ship.angle = Number(ship.angle);
+        shipupdate.x = Number(shipupdate.x);
+        shipupdate.y = Number(shipupdate.y);
+        shipupdate.angle = Number(shipupdate.angle);
 
-        var sprite = null
-        var radarpoint = null
-        if(this.ships[ship.id]){
-          sprite = this.ships[ship.id].sprite;
-          radarpoint = this.ships[ship.id].radarpoint;
+        var sprite = null;
+        var radarpoint = null;
+
+        if(this.ships[shipupdate.id]){
+          sprite = this.ships[shipupdate.id].sprite;
+          radarpoint = this.ships[shipupdate.id].radarpoint;
         }else{
-          this.ships[ship.id] = {};
-          sprite = this.ships[ship.id].sprite = shipHandler.createSprite(coordenate);
-          radarpoint = this.ships[ship.id].radarpoint = shipHandler.createRadarPoint();
+          this.ships[shipupdate.id] = {};
+          sprite = this.ships[shipupdate.id].sprite = shipHandler.createSprite(coordenate);
+          radarpoint = this.ships[shipupdate.id].radarpoint = shipHandler.createRadarPoint();
           stage.addChild(sprite);
         }
 
-        shipHandler.setPositionInRadar(radarpoint,ship,radarCoordenate);
-        shipHandler.setPositionInStage(sprite,ship,coordenate,mousepoint);
+        shipHandler.setPositionInRadar(radarpoint,shipupdate,radarCoordenate);
+        shipHandler.setPositionInStage(sprite,shipupdate,coordenate,mousepoint);
 
-        /*for (var i = 0; i < ship.bullets.length; i++) {
-          ship.bullets[i].x = Number(ship.bullets[i].x);
-          ship.bullets[i].y = Number(ship.bullets[i].y);
-          var radius = 0.2;        
-          this.graphics.lineStyle(1, 0x000000, 1);
-          this.graphics.beginFill(0x006600);
-          this.graphics.drawCircle(this.coordenate.X(ship.bullets[i].x),this.coordenate.Y(ship.bullets[i].y),radius * this.coordenate.scale);
-          this.graphics.endFill();
-        }*/
+        if(!this.ships[shipupdate.id].bullets){
+          this.ships[shipupdate.id].bullets = {};
+        }
+
+        var bullets = this.ships[shipupdate.id].bullets
+
+        for (var i in bullets) {
+          
+
+          var sprite = null;
+          if(!bullets[shipupdate.bullets[i].id]){
+            sprite = bulletpool.getSprite();
+            stage.addChild(sprite);
+            bullets[shipupdate.bullets[i].id] = sprite;
+            sprite.width = 0.4
+          }
+          shipupdate.bullets[i].x = Number(shipupdate.bullets[i].x);
+          shipupdate.bullets[i].y = Number(shipupdate.bullets[i].y);
+          sprite.x = shipupdate.bullets[i].x
+          sprite.y = shipupdate.bullets[i].y
+          //sprite.angle = shipupdate.bullets[i].angle
+        }
 
       }
 
