@@ -105,10 +105,129 @@
       }
     }
 
+    function ShipRenderer(ships){
+      this.ships = ships;
+
+      // create ship texture
+
+      this.bullets = {
+        green: PIXI.Texture.fromImage("gbullet.png"),
+        orange: PIXI.Texture.fromImage("obullet.png"),
+        yellow: PIXI.Texture.fromImage("ybullet.png"),
+        blue: PIXI.Texture.fromImage("bbullet.png")
+      }
+      
+      this.render = function(ship,coordenate,radarCoordenate,stage,mousepoint){
+        var shipHandler;
+
+        if(ship.type == "circle"){
+          shipHandler = new Circleship();
+        }else if(ship.type == "polygon"){
+          shipHandler = new Polygonship();
+        }
+
+        ship.x = Number(ship.x);
+        ship.y = Number(ship.y);
+        ship.angle = Number(ship.angle);
+
+        var sprite = null
+        var radarpoint = null
+        if(this.ships[ship.id]){
+          sprite = this.ships[ship.id].sprite;
+          radarpoint = this.ships[ship.id].radarpoint;
+        }else{
+          this.ships[ship.id] = {};
+          sprite = this.ships[ship.id].sprite = shipHandler.createSprite(coordenate);
+          radarpoint = this.ships[ship.id].radarpoint = shipHandler.createRadarPoint();
+          stage.addChild(sprite);
+        }
+
+        shipHandler.setPositionInRadar(radarpoint,ship,radarCoordenate);
+        shipHandler.setPositionInStage(sprite,ship,coordenate,mousepoint);
+
+        /*for (var i = 0; i < ship.bullets.length; i++) {
+          ship.bullets[i].x = Number(ship.bullets[i].x);
+          ship.bullets[i].y = Number(ship.bullets[i].y);
+          var radius = 0.2;        
+          this.graphics.lineStyle(1, 0x000000, 1);
+          this.graphics.beginFill(0x006600);
+          this.graphics.drawCircle(this.coordenate.X(ship.bullets[i].x),this.coordenate.Y(ship.bullets[i].y),radius * this.coordenate.scale);
+          this.graphics.endFill();
+        }*/
+
+      }
+
+      var Basicship = function(){}
+
+      Basicship.prototype.createRadarPoint = function(){
+        var radar = document.createElement("div");
+        radar.className = 'circle';
+        document.getElementById('radar').appendChild(radar);
+        return radar;
+      }
+
+      Basicship.prototype.setPositionInRadar = function(radarpoint,ship,radarCoordenate){
+        var radarContainer = document.getElementById('radar');
+        radarpoint.style.top = radarCoordenate.Y(ship.y);
+        radarpoint.style.left = radarCoordenate.X(ship.x);
+      } 
+
+      var Circleship = function(){
+        this.circles = {
+          green: PIXI.Texture.fromImage("green.png"),
+          orange: PIXI.Texture.fromImage("orange.png"),
+          yellow: PIXI.Texture.fromImage("yellow.png"),
+          blue: PIXI.Texture.fromImage("blue.png")
+        }
+      }
+      
+      Circleship.prototype = new Basicship();
+      
+      Circleship.prototype.createSprite = function(coordenate){
+          var sprite = new PIXI.Sprite(this.circles.green)
+          sprite.anchor.x = +0.5;
+          sprite.anchor.y = +0.5;
+          sprite.width = sprite.height = 4 * coordenate.scale;
+          return sprite;
+      }
+
+      Circleship.prototype.setPositionInStage = function(sprite,ship,coordenate,mousepoint){
+        sprite.position.x = coordenate.X(ship.x);
+        sprite.position.y = coordenate.Y(ship.y) ;
+        var v_x = mousepoint.x - sprite.position.x;
+        var v_y = mousepoint.y - sprite.position.y;
+        sprite.rotation = Math.atan2(v_y,v_x)+ Math.PI/2;
+      }
+
+      var Polygonship = function(){
+        this.texture = PIXI.Texture.fromImage("ship_texture.png");
+      }
+
+      Polygonship.prototype = new Basicship();
+      
+      Polygonship.prototype.createSprite = function(coordenate){
+        var sprite = new PIXI.Sprite(this.texture) ;          
+        sprite.anchor.x = 0.5;
+        sprite.anchor.y = 0.75;
+        sprite.width = sprite.height = 4 * coordenate.scale;  
+        return sprite;
+  
+      }
+
+      Polygonship.prototype.setPositionInStage = function(sprite,ship,coordenate){
+        sprite.position.x = coordenate.X(ship.x);
+        sprite.position.y = coordenate.Y(ship.y) ;
+        sprite.rotation = -ship.angle + Math.PI/2;
+      }
+
+    }
+
 
     function Game(){
       this.mousepoint = {x:0,y:0};
       this.ships = {};
+
+      this.shipRenderer = new ShipRenderer(this.ships);
       
       this.width = $(document).width();
       this.height = $(document).height();  
@@ -116,10 +235,6 @@
 
       // create an new instance of a pixi stage
       this.stage = new PIXI.Container();
-
-
-      // create ship texture
-      this.shipTexture = PIXI.Texture.fromImage("ship_texture.png");
 
       // create moving background
       this.movingbg = new PIXI.extras.TilingSprite(
@@ -129,12 +244,7 @@
       this.movingbg.tilePosition.x = 0;
       this.movingbg.tilePosition.y = 0;
 
-      // create graphics to bulltes TODO remove that
-      this.graphics = new PIXI.Graphics();
-
       this.stage.addChild(this.movingbg);
-      this.stage.addChild(this.graphics);
-
       
       //create coordenate tranform for radar
       var radarContainer = document.getElementById('radar');
@@ -143,7 +253,6 @@
 
       //create coordenate tranform for stage
       this.coordenate = new CoordenateTranform(null,15,this.width,this.height)
-
 
       // create a renderer instance.
       this.renderer = PIXI.autoDetectRenderer(this.width, this.height,{ transparent: true });
@@ -161,7 +270,6 @@
       }
 
       this.update = function(gamestate) {
-        this.graphics.clear();
       
         if(gamestate){
           //console.log("ships count: " + gamestate.ships.length);
@@ -190,7 +298,7 @@
 
           // drawing ships
           for (var i = 0; i < gamestate.ships.length; i++) {
-            this.drawShip(gamestate.ships[i],this.stage,this.ships,this.shipTexture);
+            this.shipRenderer.render(gamestate.ships[i],this.coordenate,this.radarCoordenate,this.stage,this.mousepoint);
           }
 
           //map ships easy access
@@ -218,88 +326,13 @@
             this.mousepoint.x = point.x;
             this.mousepoint.y = point.y;
             this.onMouseMove(this.coordenate.unX(this.mousepoint.x),this.coordenate.unY(this.mousepoint.y));  
-            console.log("player x,y: (" + this.player.x + "," + this.player.y + ")")
-            console.log("player2 x,y: (" + this.coordenate.unX(this.coordenate.X(this.player.x)) + "," + this.coordenate.unY(this.coordenate.Y(this.player.y)) + ")")
+            //console.log("player x,y: (" + this.player.x + "," + this.player.y + ")")
+            //console.log("player2 x,y: (" + this.coordenate.unX(this.coordenate.X(this.player.x)) + "," + this.coordenate.unY(this.coordenate.Y(this.player.y)) + ")")
           }
         }
         this.renderer.render(this.stage);
       }
 
-      this.drawShip = function(ship,stage,ships,shipTexture){
-        ship.x = Number(ship.x);
-        ship.y = Number(ship.y);
-        ship.angle = Number(ship.angle);
-
-        var debug=false;
-        if(debug){
-        
-          var paths = [
-            [-1,2, -1,-2, 1,0],
-            [-1,1, -1,-1, 3,0]
-          ];
-          
-          for (var j = 0; j < paths.length; j++) {
-            var path = paths[j];
-            for (var i = 0; i < path.length; i++) {
-              if(i % 2 == 0){
-                path[i] = this.coordenate.X(ship.x + path[i]);
-              }else{
-                path[i] = this.coordenate.Y(ship.y + path[i]);
-              }
-            }
-          }
-          var g = new PIXI.Graphics() ;
-          g.lineStyle(1, 0x000000, 1);
-          g.beginFill(0x006600);
-          g.drawPolygon(paths[0]);
-          g.drawPolygon(paths[1]);
-          g.endFill();
-          g.position.x = this.coordenate.X(ship.x);
-          g.position.y = this.coordenate.Y(ship.y);
-          g.rotation = -ship.angle;
-          g.pivot = new PIXI.Point(this.coordenate.X(ship.x),this.coordenate.Y(ship.y));
-          stage.addChild(g);
-        }
-
-        var sprite = null
-        var radar = null
-        if(ships[ship.id]){
-          sprite = ships[ship.id].sprite;
-          radar = ships[ship.id].radar;
-        }else{
-          sprite = new PIXI.Sprite(shipTexture) ;
-          ships[ship.id] = {}
-          ships[ship.id].sprite = sprite;
-          stage.addChild(sprite);
-
-          radar = document.createElement("div");
-          radar.className = 'circle';
-          document.getElementById('radar').appendChild(radar);
-          ships[ship.id].radar = radar;
-        }
-
-        var radarContainer = document.getElementById('radar');
-        radar.style.top = this.radarCoordenate.Y(ship.y);
-        radar.style.left = this.radarCoordenate.X(ship.x);
-         
-        sprite.width = sprite.height = 4 * this.coordenate.scale
-        sprite.anchor.x = 0.5;
-        sprite.anchor.y = 0.75;
-        sprite.position.x = this.coordenate.X(ship.x);
-        sprite.position.y = this.coordenate.Y(ship.y) ;
-        sprite.rotation = -ship.angle + Math.PI/2;
-
-
-        for (var i = 0; i < ship.bullets.length; i++) {
-          ship.bullets[i].x = Number(ship.bullets[i].x);
-          ship.bullets[i].y = Number(ship.bullets[i].y);
-          var radius = 0.2;        
-          this.graphics.lineStyle(1, 0x000000, 1);
-          this.graphics.beginFill(0x006600);
-          this.graphics.drawCircle(this.coordenate.X(ship.bullets[i].x),this.coordenate.Y(ship.bullets[i].y),radius * this.coordenate.scale);
-          this.graphics.endFill();
-        }
-      }
     }
 
  
@@ -379,7 +412,7 @@
   }
 
   game.onMouseMove = function(x,y){
-      console.log({'x':x,'y':y});
+      //console.log({'x':x,'y':y});
       eventsControl.sendEvent("MOUSE_MOVE",{'x':x,'y':y})
   }
 
