@@ -121,18 +121,20 @@
       this.sprites = []
       
       this.getSprite = function(){
+        console.log("bullet sprites count : " + this.sprites.length);
         for(var i in this.sprites){
           if(this.sprites[i].free){
             this.sprites[i].free = false;
             return this.sprites[i];
           }
         }
-
         var sprite = new PIXI.Sprite(this.textures.green);
         sprite.id = (this.ids++)-1;
         sprite.free = false;
         this.sprites.push(sprite);
-        this.obj[sprite.pos] = sprite;
+        console.log("new bullet sprite");
+        console.log(sprite);
+        return sprite;
       }
 
       this.releaseSprite = function(sprite){
@@ -140,8 +142,7 @@
         var index = this.sprites.indexOf(sprite);
         if(index > -1){
            this.sprites.splice(index, 1);  
-        }      
-        
+        }
       }
     }
 
@@ -185,20 +186,23 @@
 
         var bullets = this.ships[shipupdate.id].bullets
 
-        for (var i in bullets) {
+        for (var i in shipupdate.bullets) {
           
 
           var sprite = null;
           if(!bullets[shipupdate.bullets[i].id]){
-            sprite = bulletpool.getSprite();
+            sprite = this.bulletpool.getSprite();
+            console.log(sprite)
             stage.addChild(sprite);
             bullets[shipupdate.bullets[i].id] = sprite;
-            sprite.width = 0.4
+            sprite.width = 0.4 * coordenate.scale;
+          }else{
+            sprite = bullets[shipupdate.bullets[i].id];
           }
           shipupdate.bullets[i].x = Number(shipupdate.bullets[i].x);
           shipupdate.bullets[i].y = Number(shipupdate.bullets[i].y);
-          sprite.x = shipupdate.bullets[i].x
-          sprite.y = shipupdate.bullets[i].y
+          sprite.x = coordenate.X(shipupdate.bullets[i].x);
+          sprite.y = coordenate.Y(shipupdate.bullets[i].y);
           //sprite.angle = shipupdate.bullets[i].angle
         }
 
@@ -207,10 +211,10 @@
       var Basicship = function(){}
 
       Basicship.prototype.createRadarPoint = function(){
-        var radar = document.createElement("div");
-        radar.className = 'circle';
-        document.getElementById('radar').appendChild(radar);
-        return radar;
+        var radarpoint = document.createElement("div");
+        radarpoint.className = 'circle';
+        document.getElementById('radar').appendChild(radarpoint);
+        return radarpoint;
       }
 
       Basicship.prototype.setPositionInRadar = function(radarpoint,ship,radarCoordenate){
@@ -362,7 +366,8 @@
               console.log(this.ships[id])
               this.stage.removeChild(this.ships[id].sprite)
               this.ships[id].sprite = null;
-              document.getElementById('radar').removeChild(this.ships[id].radar);
+              console.log(this.ships[id])
+              document.getElementById('radar').removeChild(this.ships[id].radarpoint);
               delete this.ships[id];
             }
           }
@@ -413,36 +418,36 @@
 
         var _this = this
         //key pressed
-        this.kd.LEFT.down(function () {
+        this.kd.A.down(function () {
           _this.sendEvent("LEFT",{pressed: true});
         });
-        this.kd.UP.down(function () {
+        this.kd.W.down(function () {
           _this.sendEvent("UP",{pressed: true});
         });
-        this.kd.DOWN.down(function () {
+        this.kd.S.down(function () {
           _this.sendEvent("DOWN",{pressed: true});
         });
-        this.kd.RIGHT.down(function () {
+        this.kd.D.down(function () {
           _this.sendEvent("RIGHT",{pressed: true});
         });
-        this.kd.S.down(function () {
+        this.kd.SPACE.down(function () {
           _this.sendEvent("FIRE",{pressed: true});
         });
 
         //release key 
-        this.kd.LEFT.up(function () {
+        this.kd.A.up(function () {
           _this.sendEvent("LEFT",{pressed: false});
         });
-        this.kd.UP.up(function () {
+        this.kd.W.up(function () {
           _this.sendEvent("UP",{pressed: false});
         });
-        this.kd.DOWN.up(function () {
+        this.kd.S.up(function () {
           _this.sendEvent("DOWN",{pressed: false});
         });
-        this.kd.RIGHT.up(function () {
+        this.kd.D.up(function () {
           _this.sendEvent("RIGHT",{pressed: false});
         });
-        this.kd.S.up(function () {
+        this.kd.SPACE.up(function () {
           _this.sendEvent("FIRE",{pressed: false});
         });
       }
