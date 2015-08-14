@@ -105,7 +105,7 @@
       }
     }
 
-    function BulletPool(){
+    /*function BulletPool(){
 
       //bullets
       this.textures = {
@@ -144,151 +144,147 @@
            this.sprites.splice(index, 1);  
         }
       }
-    }
+    }*/
 
-    function ShipRenderer(ships){
-      this.bulletpool = new  BulletPool();
-      this.shipsOnStage = ships;
+
+
+    function GameRenderer(objects){
+      this.objectsOnStage = objects;
 
       // create ship texture
-      this.render = function(shipupdate,coordenate,radarCoordenate,stage,mousepoint){
-        var shipHandler;
+      this.addToStage = function(update,coordenate,radarCoordenate,stage,mousepoint){
+        var objectRender;
 
-        if(shipupdate.type == "circle"){
-          shipHandler = new Circleship();
-        }else if(shipupdate.type == "polygon"){
-          shipHandler = new Polygonship();
+        if(update.type == "circle"){
+          objectRender = new CircleShipRender();
+        }else if(update.type == "polygon"){
+          objectRender = new PolygonShipRender();
+        } else if(update.type == "bullet"){
+          objectRender = new BulletRender();
         }
-
-        shipupdate.x = Number(shipupdate.x);
-        shipupdate.y = Number(shipupdate.y);
-        shipupdate.angle = Number(shipupdate.angle);
 
         var sprite = null;
         var radarpoint = null;
 
-        if(this.shipsOnStage[shipupdate.id]){
-          sprite = this.shipsOnStage[shipupdate.id].sprite;
-          radarpoint = this.shipsOnStage[shipupdate.id].radarpoint;
+        if(this.objectsOnStage[update.id]){
+          sprite = this.objectsOnStage[update.id].sprite;
+          radarpoint = this.objectsOnStage[update.id].radarpoint;
         }else{
-          this.shipsOnStage[shipupdate.id] = {};
-          sprite = this.shipsOnStage[shipupdate.id].sprite = shipHandler.createSprite(coordenate);
-          radarpoint = this.shipsOnStage[shipupdate.id].radarpoint = shipHandler.createRadarPoint();
+          this.objectsOnStage[update.id] = {};
+          sprite = this.objectsOnStage[update.id].sprite = objectRender.createSprite(coordenate);
+          if(objectRender.createRadarPoint){
+            radarpoint = this.objectsOnStage[update.id].radarpoint = objectRender.createRadarPoint();
+          }
           stage.addChild(sprite);
         }
-
-        shipHandler.setPositionInRadar(radarpoint,shipupdate,radarCoordenate);
-        shipHandler.setPositionInStage(sprite,shipupdate,coordenate,mousepoint);
-
-        if(!this.shipsOnStage[shipupdate.id].bullets){
-          this.shipsOnStage[shipupdate.id].bullets = {};
+        if(objectRender.setPositionInRadar){
+          objectRender.setPositionInRadar(radarpoint,update,radarCoordenate);
         }
+        objectRender.setPositionInStage(sprite,update,coordenate,mousepoint);
 
-        var bulletsOnStage = this.shipsOnStage[shipupdate.id].bullets
-        var bulletOnGame = {}
-        for (var i in shipupdate.bullets) {
-
-          var sprite = null;
-          var bulletId = shipupdate.bullets[i].id;
-          bulletOnGame[bulletId] = true;
-
-          if(!bulletsOnStage[bulletId]){
-            sprite = this.bulletpool.getSprite();
-            sprite.id = bulletId;
-            sprite.width = 0.4 * coordenate.scale;
-            bulletsOnStage[bulletId] = sprite;
-            //TODO angle
-            //sprite.angle = shipupdate.bullets[i].angle
-            stage.addChild(sprite);
-          }else{
-            sprite = bulletsOnStage[bulletId];
-          }
-          sprite.x = coordenate.X(Number(shipupdate.bullets[i].x));
-          sprite.y = coordenate.Y(Number(shipupdate.bullets[i].y));
-        }
-
-        for (var i in bulletsOnStage) {
-          if(!bulletOnGame[bulletsOnStage[i].id]){
-            console.log("removing bullet sprite")
-            console.log(bulletsOnStage[i]);
-            stage.removeChild(bulletsOnStage[i]);
-            this.bulletpool.releaseSprite(bulletsOnStage[i]);
-            delete bulletsOnStage[i];
-          }
-        }
       }
 
-      var Basicship = function(){}
+      this.removeFromStage = function(index){
 
-      Basicship.prototype.createRadarPoint = function(){
-        var radarpoint = document.createElement("div");
-        radarpoint.className = 'circle';
-        document.getElementById('radar').appendChild(radarpoint);
-        return radarpoint;
+        this.stage.removeChild(this.objectsOnStage[index].sprite)
+        this.objectsOnStage[index].sprite = null;
+        if(this.objectsOnStage[index].radarpoint)
+          document.getElementById('radar').removeChild(this.objectsOnStage[index].radarpoint);
+        delete this.objectsOnStage[index];
+
       }
+    }
 
-      Basicship.prototype.setPositionInRadar = function(radarpoint,ship,radarCoordenate){
-        var radarContainer = document.getElementById('radar');
-        radarpoint.style.top = radarCoordenate.Y(ship.y);
-        radarpoint.style.left = radarCoordenate.X(ship.x);
-      } 
-
-      var Circleship = function(){
-        this.circles = {
-          green: PIXI.Texture.fromImage("green.png"),
-          orange: PIXI.Texture.fromImage("orange.png"),
-          yellow: PIXI.Texture.fromImage("yellow.png"),
-          blue: PIXI.Texture.fromImage("blue.png")
-        }
+    var BulletRender = function(){
+      this.textures = {
+        green: PIXI.Texture.fromImage("gbullet.png"),
+        orange: PIXI.Texture.fromImage("obullet.png"),
+        yellow: PIXI.Texture.fromImage("ybullet.png"),
+        blue: PIXI.Texture.fromImage("bbullet.png")
       }
-      
-      Circleship.prototype = new Basicship();
-      
-      Circleship.prototype.createSprite = function(coordenate){
-          var sprite = new PIXI.Sprite(this.circles.green)
-          sprite.anchor.x = +0.5;
-          sprite.anchor.y = +0.5;
-          sprite.width = sprite.height = 4 * coordenate.scale;
-          return sprite;
-      }
-
-      Circleship.prototype.setPositionInStage = function(sprite,ship,coordenate,mousepoint){
-        sprite.position.x = coordenate.X(ship.x);
-        sprite.position.y = coordenate.Y(ship.y) ;
-        var v_x = mousepoint.x - sprite.position.x;
-        var v_y = mousepoint.y - sprite.position.y;
-        sprite.rotation = Math.atan2(v_y,v_x)+ Math.PI/2;
-      }
-
-      var Polygonship = function(){
-        this.texture = PIXI.Texture.fromImage("ship_texture.png");
-      }
-
-      Polygonship.prototype = new Basicship();
-      
-      Polygonship.prototype.createSprite = function(coordenate){
-        var sprite = new PIXI.Sprite(this.texture) ;          
-        sprite.anchor.x = 0.5;
-        sprite.anchor.y = 0.75;
-        sprite.width = sprite.height = 4 * coordenate.scale;  
+    }
+    
+    BulletRender.prototype.createSprite = function(coordenate){
+        var sprite = new PIXI.Sprite(this.textures.green)
+        sprite.width = 0.4 * coordenate.scale;
         return sprite;
-  
-      }
+    }
 
-      Polygonship.prototype.setPositionInStage = function(sprite,ship,coordenate){
-        sprite.position.x = coordenate.X(ship.x);
-        sprite.position.y = coordenate.Y(ship.y) ;
-        sprite.rotation = -ship.angle + Math.PI/2;
-      }
+    BulletRender.prototype.setPositionInStage = function(sprite,bullet,coordenate,mousepoint){
+      sprite.position.x = coordenate.X(Number(bullet.x));
+      sprite.position.y = coordenate.Y(Number(bullet.y)) ;
+    }
 
+    var BasicShipRender = function(){}
+
+    BasicShipRender.prototype.createRadarPoint = function(){
+      var radarpoint = document.createElement("div");
+      radarpoint.className = 'circle';
+      document.getElementById('radar').appendChild(radarpoint);
+      return radarpoint;
+    }
+
+    BasicShipRender.prototype.setPositionInRadar = function(radarpoint,ship,radarCoordenate){
+      var radarContainer = document.getElementById('radar');
+      radarpoint.style.top = radarCoordenate.Y(Number(ship.y));
+      radarpoint.style.left = radarCoordenate.X(Number(ship.x));
+    } 
+
+    var CircleShipRender = function(){
+      this.circles = {
+        green: PIXI.Texture.fromImage("green.png"),
+        orange: PIXI.Texture.fromImage("orange.png"),
+        yellow: PIXI.Texture.fromImage("yellow.png"),
+        blue: PIXI.Texture.fromImage("blue.png")
+      }
+    }
+    
+    CircleShipRender.prototype = new BasicShipRender();
+    
+    CircleShipRender.prototype.createSprite = function(coordenate){
+        var sprite = new PIXI.Sprite(this.circles.green)
+        sprite.anchor.x = +0.5;
+        sprite.anchor.y = +0.5;
+        sprite.width = sprite.height = 4 * coordenate.scale;
+        return sprite;
+    }
+
+    CircleShipRender.prototype.setPositionInStage = function(sprite,ship,coordenate,mousepoint){
+      sprite.position.x = coordenate.X(Number(ship.x));
+      sprite.position.y = coordenate.Y(Number(ship.y)) ;
+      var v_x = mousepoint.x - sprite.position.x;
+      var v_y = mousepoint.y - sprite.position.y;
+      sprite.rotation = Math.atan2(v_y,v_x)+ Math.PI/2;
+    }
+
+    var PolygonShipRender = function(){
+      this.texture = PIXI.Texture.fromImage("ship_texture.png");
+    }
+
+    PolygonShipRender.prototype = new BasicShipRender();
+    
+    PolygonShipRender.prototype.createSprite = function(coordenate){
+      var sprite = new PIXI.Sprite(this.texture) ;          
+      sprite.anchor.x = 0.5;
+      sprite.anchor.y = 0.75;
+      sprite.width = sprite.height = 4 * coordenate.scale;  
+      return sprite;
+
+    }
+
+    PolygonShipRender.prototype.setPositionInStage = function(sprite,ship,coordenate){
+      sprite.position.x = coordenate.X(Number(ship.x));
+      sprite.position.y = coordenate.Y(Number(ship.y)) ;
+      sprite.rotation = -Number(ship.angle) + Math.PI/2;
     }
 
 
     function Game(){
       this.mousepoint = {x:0,y:0};
-      this.ships = {};
+      this.entities = {};
+      
 
-      this.shipRenderer = new ShipRenderer(this.ships);
+      this.gameRenderer = new GameRenderer(this.entities);
       
       this.width = $(document).width();
       this.height = $(document).height();  
@@ -357,28 +353,25 @@
             this.movingbg.tilePosition.y = (this.player.y*this.coordenate.scale)
           }
 
-          // drawing ships
-          for (var i = 0; i < gamestate.ships.length; i++) {
-            this.shipRenderer.render(gamestate.ships[i],this.coordenate,this.radarCoordenate,this.stage,this.mousepoint);
-          }
-
-          //map ships easy access
-          var shipsInGameState = {}
-          for (var i = 0; i < gamestate.ships.length; i++) {
-              shipsInGameState[Number(gamestate.ships[i].id)] = gamestate.ships[i];
-          }
+          var entities = gamestate.ships.concat(gamestate.bullets);
           
+          // drawing entities
+          for (var i = 0; i < entities.length; i++) {
+            this.gameRenderer.addToStage(entities[i],this.coordenate,this.radarCoordenate,this.stage,this.mousepoint);
+          }
 
-          //erase ships
-          for(var id in this.ships){
-            if(!shipsInGameState[Number(id)]){
-              //console.log("deleting id = " + id);
-              //console.log(this.ships[id])
-              this.stage.removeChild(this.ships[id].sprite)
-              this.ships[id].sprite = null;
-              //console.log(this.ships[id])
-              document.getElementById('radar').removeChild(this.ships[id].radarpoint);
-              delete this.ships[id];
+          //map entities easy access
+          var entitiesInGameState = {}
+          for (var i = 0; i < entities.length; i++) {
+              entitiesInGameState[Number(entities[i].id)] = entities[i];
+          }
+
+          //remove entities from stage
+          for(var i = 0; i < entities.length; i++){
+            if(!entitiesInGameState[Number(entities[i].id)])
+            {
+              console.log("removing");
+              this.gameRenderer.removeFromStage(entities[i].id)
             }
           }
 
@@ -388,8 +381,6 @@
             this.mousepoint.x = point.x;
             this.mousepoint.y = point.y;
             this.onMouseMove(this.coordenate.unX(this.mousepoint.x),this.coordenate.unY(this.mousepoint.y));  
-            //console.log("player x,y: (" + this.player.x + "," + this.player.y + ")")
-            //console.log("player2 x,y: (" + this.coordenate.unX(this.coordenate.X(this.player.x)) + "," + this.coordenate.unY(this.coordenate.Y(this.player.y)) + ")")
           }
         }
         this.renderer.render(this.stage);
