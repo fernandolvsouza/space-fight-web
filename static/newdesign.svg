@@ -209,12 +209,12 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="470.25349"
-     inkscape:cy="387.88304"
+     inkscape:zoom="0.7"
+     inkscape:cx="-277.47645"
+     inkscape:cy="692.98379"
      inkscape:document-units="px"
-     inkscape:current-layer="layer2"
-     showgrid="false"
+     inkscape:current-layer="layer1"
+     showgrid="true"
      inkscape:window-width="1920"
      inkscape:window-height="961"
      inkscape:window-x="21"
@@ -383,5 +383,29 @@
        width="35.714287"
        id="rect4856"
        style="fill:#006600;fill-opacity:0.80392157" />
+    <path
+       style="display:inline;fill:#000000;fill-opacity:1"
+       d="m 246.85713,171.44595 c 0,16.56854 -17.0665,-2.85714 -39.15788,-2.85714 -22.09139,0 -40.8421,19.42568 -40.8421,2.85714 0,-16.56854 17.9086,-30 39.99999,-30 22.09139,0 39.99999,13.43146 39.99999,30 z"
+       id="path4178"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="sssss" />
+    <path
+       style="display:inline;fill:#000000;fill-opacity:1"
+       d="m 576.2857,171.44596 c 0,16.56854 -17.0665,-2.85714 -39.15788,-2.85714 -22.09139,0 -40.8421,19.42568 -40.8421,2.85714 0,-16.56854 17.9086,-30 39.99999,-30 22.09139,0 39.99999,13.43146 39.99999,30 z"
+       id="path4178-1"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="sssss" />
+    <path
+       style="display:inline;fill:#000000;fill-opacity:1"
+       d="m 245.14284,500.58881 c 0,16.56854 -17.0665,-2.85714 -39.15788,-2.85714 -22.09139,0 -40.8421,19.42568 -40.8421,2.85714 0,-16.56854 17.9086,-30 39.99999,-30 22.09139,0 39.99999,13.43146 39.99999,30 z"
+       id="path4178-4"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="sssss" />
+    <path
+       style="display:inline;fill:#000000;fill-opacity:1"
+       d="m 575.71428,499.73167 c 0,16.56854 -17.0665,-2.85714 -39.15788,-2.85714 -22.09139,0 -40.8421,19.42568 -40.8421,2.85714 0,-16.56854 17.9086,-30 39.99999,-30 22.09139,0 39.99999,13.43146 39.99999,30 z"
+       id="path4178-8"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="sssss" />
   </g>
 </svg>

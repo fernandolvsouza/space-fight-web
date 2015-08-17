@@ -103,6 +103,14 @@
       this.unY = function(y){
         return (-y+maxheight/2)/scale +norm(this.refpoint).y 
       }
+
+      this.unPoint = function(point){
+        return {x:this.unX(point.x),y:this.unY(point.y)}
+      }
+
+      this.point = function(point){
+        return {x:this.X(point.x),y:this.Y(point.y)}
+      }
     }
 
     /*function BulletPool(){
@@ -184,9 +192,9 @@
 
       }
 
-      this.removeFromStage = function(index){
+      this.removeFromStage = function(index,stage){
 
-        this.stage.removeChild(this.objectsOnStage[index].sprite)
+        stage.removeChild(this.objectsOnStage[index].sprite)
         this.objectsOnStage[index].sprite = null;
         if(this.objectsOnStage[index].radarpoint)
           document.getElementById('radar').removeChild(this.objectsOnStage[index].radarpoint);
@@ -207,12 +215,15 @@
     BulletRender.prototype.createSprite = function(coordenate){
         var sprite = new PIXI.Sprite(this.textures.green)
         sprite.width = 0.4 * coordenate.scale;
+        sprite.anchor.x = 0.0;
+        sprite.anchor.y = 1.0;
         return sprite;
     }
 
     BulletRender.prototype.setPositionInStage = function(sprite,bullet,coordenate,mousepoint){
       sprite.position.x = coordenate.X(Number(bullet.x));
       sprite.position.y = coordenate.Y(Number(bullet.y)) ;
+      sprite.rotation = -Number(bullet.angle)+ Math.PI/2;;
     }
 
     var BasicShipRender = function(){}
@@ -243,8 +254,8 @@
     
     CircleShipRender.prototype.createSprite = function(coordenate){
         var sprite = new PIXI.Sprite(this.circles.green)
-        sprite.anchor.x = +0.5;
-        sprite.anchor.y = +0.5;
+        sprite.anchor.x = 0.5;
+        sprite.anchor.y = 0.5;
         sprite.width = sprite.height = 4 * coordenate.scale;
         return sprite;
     }
@@ -280,11 +291,11 @@
 
 
     function Game(){
-      this.mousepoint = {x:0,y:0};
-      this.entities = {};
+      this.gamemousepoint = {x:0,y:0};
+      this.entitiesOnStage = {};
       
 
-      this.gameRenderer = new GameRenderer(this.entities);
+      this.gameRenderer = new GameRenderer(this.entitiesOnStage);
       
       this.width = $(document).width();
       this.height = $(document).height();  
@@ -357,7 +368,9 @@
           
           // drawing entities
           for (var i = 0; i < entities.length; i++) {
-            this.gameRenderer.addToStage(entities[i],this.coordenate,this.radarCoordenate,this.stage,this.mousepoint);
+            var a = this.coordenate.point(this.gamemousepoint);
+            this.gameRenderer.addToStage(entities[i],this.coordenate,this.radarCoordenate,this.stage,
+              a);
           }
 
           //map entities easy access
@@ -367,20 +380,20 @@
           }
 
           //remove entities from stage
-          for(var i = 0; i < entities.length; i++){
-            if(!entitiesInGameState[Number(entities[i].id)])
+          for(var id in this.entitiesOnStage){
+            if(!entitiesInGameState[id])
             {
-              console.log("removing");
-              this.gameRenderer.removeFromStage(entities[i].id)
+              this.gameRenderer.removeFromStage(id,this.stage);
             }
           }
 
           //send Mouse Position
           var point = this.renderer.plugins.interaction.mouse.global;
-          if(this.mousepoint.x != point.x || this.mousepoint.y != point.y){
-            this.mousepoint.x = point.x;
-            this.mousepoint.y = point.y;
-            this.onMouseMove(this.coordenate.unX(this.mousepoint.x),this.coordenate.unY(this.mousepoint.y));  
+          var gamepoint = {x:this.coordenate.unX(point.x),y:this.coordenate.unY(point.y)}
+          if(this.gamemousepoint.x != gamepoint.x || this.gamemousepoint.y != gamepoint.y){
+            this.gamemousepoint.x = gamepoint.x;
+            this.gamemousepoint.y = gamepoint.y;
+            this.onMouseMove(this.gamemousepoint.x,this.gamemousepoint.y);  
           }
         }
         this.renderer.render(this.stage);
