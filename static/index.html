@@ -160,7 +160,7 @@
       this.objectsOnStage = objects;
 
       // create ship texture
-      this.addToStage = function(update,coordenate,radarCoordenate,stage,mousepoint){
+      this.addToStage = function(update,coordenate,radarCoordenate,stage){
         var objectRender;
 
         if(update.type == "circle"){
@@ -179,7 +179,7 @@
           radarpoint = this.objectsOnStage[update.id].radarpoint;
         }else{
           this.objectsOnStage[update.id] = {};
-          sprite = this.objectsOnStage[update.id].sprite = objectRender.createSprite(coordenate);
+          sprite = this.objectsOnStage[update.id].sprite = objectRender.createSprite(update,coordenate);
           if(objectRender.createRadarPoint){
             radarpoint = this.objectsOnStage[update.id].radarpoint = objectRender.createRadarPoint();
           }
@@ -188,7 +188,7 @@
         if(objectRender.setPositionInRadar){
           objectRender.setPositionInRadar(radarpoint,update,radarCoordenate);
         }
-        objectRender.setPositionInStage(sprite,update,coordenate,mousepoint);
+        objectRender.setPositionInStage(sprite,update,coordenate);
 
       }
 
@@ -212,7 +212,7 @@
       }
     }
     
-    BulletRender.prototype.createSprite = function(coordenate){
+    BulletRender.prototype.createSprite = function(bullet,coordenate){
         var sprite = new PIXI.Sprite(this.textures.green)
         sprite.width = 0.4 * coordenate.scale;
         sprite.anchor.x = 0.0;
@@ -220,7 +220,7 @@
         return sprite;
     }
 
-    BulletRender.prototype.setPositionInStage = function(sprite,bullet,coordenate,mousepoint){
+    BulletRender.prototype.setPositionInStage = function(sprite,bullet,coordenate){
       sprite.position.x = coordenate.X(Number(bullet.x));
       sprite.position.y = coordenate.Y(Number(bullet.y)) ;
       sprite.rotation = -Number(bullet.angle)+ Math.PI/2;;
@@ -252,20 +252,20 @@
     
     CircleShipRender.prototype = new BasicShipRender();
     
-    CircleShipRender.prototype.createSprite = function(coordenate){
-        var sprite = new PIXI.Sprite(this.circles.green)
+    CircleShipRender.prototype.createSprite = function(ship,coordenate){
+        var sprite = new PIXI.Sprite(ship.isbot ? this.circles.blue : this.circles.green) ;      
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
         sprite.width = sprite.height = 4 * coordenate.scale;
         return sprite;
     }
 
-    CircleShipRender.prototype.setPositionInStage = function(sprite,ship,coordenate,mousepoint){
+    CircleShipRender.prototype.setPositionInStage = function(sprite,ship,coordenate){
       sprite.position.x = coordenate.X(Number(ship.x));
       sprite.position.y = coordenate.Y(Number(ship.y)) ;
-      var v_x = mousepoint.x - sprite.position.x;
-      var v_y = mousepoint.y - sprite.position.y;
-      sprite.rotation = Math.atan2(v_y,v_x)+ Math.PI/2;
+      //var v_x = mousepoint.x - sprite.position.x;
+      //var v_y = mousepoint.y - sprite.position.y;
+      sprite.rotation = -Number(ship.angle)+ Math.PI/2;
     }
 
     var PolygonShipRender = function(){
@@ -274,8 +274,8 @@
 
     PolygonShipRender.prototype = new BasicShipRender();
     
-    PolygonShipRender.prototype.createSprite = function(coordenate){
-      var sprite = new PIXI.Sprite(this.texture) ;          
+    PolygonShipRender.prototype.createSprite = function(ship,coordenate){
+      var sprite = new PIXI.Sprite(ship.isbot ? this.texture.blue : this.texture.green) ;          
       sprite.anchor.x = 0.5;
       sprite.anchor.y = 0.75;
       sprite.width = sprite.height = 4 * coordenate.scale;  
@@ -368,9 +368,7 @@
           
           // drawing entities
           for (var i = 0; i < entities.length; i++) {
-            var a = this.coordenate.point(this.gamemousepoint);
-            this.gameRenderer.addToStage(entities[i],this.coordenate,this.radarCoordenate,this.stage,
-              a);
+            this.gameRenderer.addToStage(entities[i],this.coordenate,this.radarCoordenate,this.stage);
           }
 
           //map entities easy access
