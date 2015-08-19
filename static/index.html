@@ -23,6 +23,33 @@
         overflow: hidden;
       }
 
+      .lifebar{
+        width:300px;
+        height:20px;
+        position: absolute;
+        top:20px;
+        left:40px;
+        background-color: transparent;
+        border: 1px solid;
+        border-color: #006600;
+      }
+
+      .lifebar > div{
+         background-color: green;
+         width: 100%;
+         height: 18px;
+      }
+
+      .status{
+        font-size: 20px;
+        position: absolute;
+        top:17px;
+        left:360px;
+        vertical-align: top;
+        background-color: transparent;
+        color: green;
+      }
+
       .circle {
         border-radius: 50%;
         width: 5px;
@@ -52,6 +79,11 @@
 
   <div id="radar" class="radar">
   </div>
+  <div id="lifebar" class="lifebar"><div id="progress"></div>
+  </div>
+
+  <div id="status" class="status"></div>
+
 
 
   <script src="js/pixi.js"></script>
@@ -65,15 +97,28 @@
     var host = location.origin.replace(/^http/, 'ws')
     var ws = new WebSocket(host);
     var stream = null;
+    var stream_count = 0;
+    var laststreamtime = 0;
 
     ws.onmessage = function (event) {
       var datas =  event.data.split('\n');
       for (var i = 0; i <= datas.length; i++) {
         if(typeof(datas[i]) !=  "undefined" && datas[i] != ""){
-          //console.log(datas[i]);
           stream = JSON.parse(datas[i]);
+          stream_count ++;    
         }
       };
+      
+      
+
+      var now = performance.now();
+      var delta = now - laststreamtime
+      if(delta > 1000){
+        console.log("datastreams by second : " + stream_count*1000/(delta));
+        stream_count = 0;
+        laststreamtime = now;
+      }
+      
     };
     
     function CoordenateTranform(refpoint,scale,maxwidth,maxheight){
@@ -342,6 +387,7 @@
         if(gamestate){
           //console.log("ships count: " + gamestate.ships.length);
           //finding player
+
           if(gamestate.player){
             if(!this.player){
               if(this.onNewPlayer){
@@ -353,9 +399,17 @@
             
             this.coordenate.refpoint = this.player;
             this.radarCoordenate.refpoint = this.player;
+            
+            var lifebar = document.getElementById('progress');
+            lifebar.style.width = this.player.energy + '%';
+
+            var status = document.getElementById('status');
+            status.innerHTML = gamestate.totalbots + ' bots ' + gamestate.totalplayers + (gamestate.totalplayers > 1 ? ' players '  : ' player');
 
             gamestate.ships.push(gamestate.player);
-          }
+          }else{
+            lifebar.style.width = '0%';
+          }         
       
           //moving background
           //console.log(this.player)
@@ -480,8 +534,24 @@
       eventsControl.sendEvent("MOUSE_MOVE",{'x':x,'y':y})
   }
 
+  var lastupdatetime = 0
+  var updatetimeBysecond = 0
+  
   var refreshFrame = function(){
+    var before = performance.now();
     game.update(stream);
+    var after = performance.now();
+    
+    var delta = after-before
+
+    updatetimeBysecond = updatetimeBysecond + delta;
+    
+    if(after-lastupdatetime > 1000){
+      console.log("update time lost by second: " +updatetimeBysecond+  "miliseconds");
+      lastupdatetime = after;
+      updatetimeBysecond = 0;
+    }
+
     fps.tick();
     kd.tick();
     requestAnimationFrame(refreshFrame);
