@@ -1,0 +1,19 @@
+{
+	"name": "pixi-particles",
+	"version": "1.4.2",
+	"main": "dist/pixi-particles.min.js",
+	"dependencies": {
+		"pixi.js": "*"
+	},
+	"ignore": [
+		".gitignore",
+		".bowerrc",
+		"package.json",
+		"tasks",
+		"Gruntfile.js",
+		"build.json",
+		"examples",
+		"docs",
+		"src"
+	]
+}

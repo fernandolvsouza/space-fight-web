@@ -79,18 +79,20 @@
 
   <div id="radar" class="radar">
   </div>
-  <div id="lifebar" class="lifebar"><div id="progress"></div>
+  <div id="lifebar" class="lifebar">
+    <div id="progress"></div>
   </div>
 
   <div id="status" class="status"></div>
 
-
-
-  <script src="js/pixi.js"></script>
   <script src="js/fpsmeter.min.js"></script>
   <script src="js/keydrown.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
   <script src="js/bootstrap.min.js"></script>
+  <script src="bower_components/pixi.js/bin/pixi.js"></script>
+  <script src="bower_components/pixi-particles/dist/pixi-particles.min.js"></script>
+  
+  
   <script>
 
     $('#myModal').modal('show');
@@ -216,24 +218,14 @@
           objectRender = new BulletRender();
         }
 
-        var sprite = null;
-        var radarpoint = null;
+        if(!this.objectsOnStage[update.id]){
+          this.objectsOnStage[update.id] = objectRender.createEntity(update,coordenate);
+          console.log(this.objectsOnStage[update.id]);
+          stage.addChild(this.objectsOnStage[update.id].sprite);
 
-        if(this.objectsOnStage[update.id]){
-          sprite = this.objectsOnStage[update.id].sprite;
-          radarpoint = this.objectsOnStage[update.id].radarpoint;
-        }else{
-          this.objectsOnStage[update.id] = {};
-          sprite = this.objectsOnStage[update.id].sprite = objectRender.createSprite(update,coordenate);
-          if(objectRender.createRadarPoint){
-            radarpoint = this.objectsOnStage[update.id].radarpoint = objectRender.createRadarPoint();
-          }
-          stage.addChild(sprite);
         }
-        if(objectRender.setPositionInRadar){
-          objectRender.setPositionInRadar(radarpoint,update,radarCoordenate);
-        }
-        objectRender.setPositionInStage(sprite,update,coordenate);
+
+        objectRender.update(this.objectsOnStage[update.id],update,coordenate,radarCoordenate);
 
       }
 
@@ -253,22 +245,92 @@
         green: PIXI.Texture.fromImage("gbullet.png"),
         orange: PIXI.Texture.fromImage("obullet.png"),
         yellow: PIXI.Texture.fromImage("ybullet.png"),
-        blue: PIXI.Texture.fromImage("bbullet.png")
+        blue: PIXI.Texture.fromImage("bbullet.png"),
+        particle : PIXI.Texture.fromImage('particle.png')
       }
+      
     }
     
-    BulletRender.prototype.createSprite = function(bullet,coordenate){
-        var sprite = new PIXI.Sprite(this.textures.green)
-        sprite.width = 0.4 * coordenate.scale;
+    BulletRender.prototype.createEntity = function(bullet,coordenate){
+        var entity = {}
+        var container = new PIXI.DisplayObjectContainer();
+        entity.emitter = new cloudkid.Emitter(
+          container,
+          this.textures.particle,
+          {
+            "alpha": {
+              "start": 1,
+              "end": 0
+            },
+            "scale": {
+              "start": 0.5,
+              "end": 0.01,
+              "minimumScaleMultiplier": 1
+            },
+            "color": {
+              "start": "#7ed995",
+              "end": "#6bba2f"
+            },
+            "speed": {
+              "start": 56,
+              "end": 50
+            },
+            "acceleration": {
+              "x": 0,
+              "y": 0
+            },
+            "startRotation": {
+              "min": 0,
+              "max": 360
+            },
+            "rotationSpeed": {
+              "min": 0,
+              "max": 0
+            },
+            "lifetime": {
+              "min": 0.2,
+              "max": 0.8
+            },
+            "blendMode": "normal",
+            "frequency": 0.011,
+            "emitterLifetime": -1,
+            "maxParticles": 500,
+            "pos": {
+              "x": 0,
+              "y": 0
+            },
+            "addAtBack": false,
+            "spawnType": "circle",
+            "spawnCircle": {
+              "x": 0,
+              "y": 0,
+              "r": 0
+            }
+          }
+        );
+        entity.emitter.emit = true;
+        entity.emitter.particleConstructor = cloudkid.AnimatedParticle;
+
+        ///*var sprite = new PIXI.Sprite(this.textures.green)
+        /*sprite.width = 0.4 * coordenate.scale;
         sprite.anchor.x = 0.0;
         sprite.anchor.y = 1.0;
-        return sprite;
+        entity.sprite = sprite*/
+        entity.sprite = container;
+
+        entity.lastupdate = Date.now();
+
+        return entity;
     }
 
-    BulletRender.prototype.setPositionInStage = function(sprite,bullet,coordenate){
+    BulletRender.prototype.update = function(entity,bullet,coordenate,radarCoordenate){
+      var sprite = entity.sprite;
       sprite.position.x = coordenate.X(Number(bullet.x));
       sprite.position.y = coordenate.Y(Number(bullet.y)) ;
-      sprite.rotation = -Number(bullet.angle)+ Math.PI/2;;
+      sprite.rotation = -Number(bullet.angle)+ Math.PI/2;
+      var now = Date.now();
+      entity.emitter.update((now - entity.lastupdate) * 0.001)
+      entity.lastupdate = now;
     }
 
     var BasicShipRender = function(){}
@@ -297,20 +359,35 @@
     
     CircleShipRender.prototype = new BasicShipRender();
     
-    CircleShipRender.prototype.createSprite = function(ship,coordenate){
+    CircleShipRender.prototype.createEntity = function(ship,coordenate){
+        var entity = {};
+
         var sprite = new PIXI.Sprite(ship.isbot ? this.circles.blue : this.circles.green) ;      
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
         sprite.width = sprite.height = 4 * coordenate.scale;
-        return sprite;
+
+        entity.sprite = sprite;
+        entity.radarpoint = this.createRadarPoint();
+
+        return entity;
     }
 
-    CircleShipRender.prototype.setPositionInStage = function(sprite,ship,coordenate){
+    CircleShipRender.prototype.update = function(entity,ship,coordenate,radarCoordenate){
+      var sprite = entity.sprite;
       sprite.position.x = coordenate.X(Number(ship.x));
       sprite.position.y = coordenate.Y(Number(ship.y)) ;
-      //var v_x = mousepoint.x - sprite.position.x;
-      //var v_y = mousepoint.y - sprite.position.y;
       sprite.rotation = -Number(ship.angle)+ Math.PI/2;
+      
+      if(sprite.texture != this.circles.orange && ship.isdamaged){
+        sprite.texture = this.circles.orange;
+      }
+      
+      if(sprite.texture == this.circles.orange && !ship.isdamaged){  
+        sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
+      }
+
+      this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
     }
 
     var PolygonShipRender = function(){
@@ -319,19 +396,27 @@
 
     PolygonShipRender.prototype = new BasicShipRender();
     
-    PolygonShipRender.prototype.createSprite = function(ship,coordenate){
+    PolygonShipRender.prototype.createEntity = function(ship,coordenate){
+      var entity = {};
+
       var sprite = new PIXI.Sprite(ship.isbot ? this.texture.blue : this.texture.green) ;          
       sprite.anchor.x = 0.5;
       sprite.anchor.y = 0.75;
-      sprite.width = sprite.height = 4 * coordenate.scale;  
-      return sprite;
+      sprite.width = sprite.height = 4 * coordenate.scale; 
 
+      entity.sprite = sprite;
+      entity.radarpoint = this.createRadarPoint();
+
+      return entity;
     }
 
-    PolygonShipRender.prototype.setPositionInStage = function(sprite,ship,coordenate){
+    PolygonShipRender.prototype.update = function(sprite,ship,coordenate,radarCoordenate){
+      var sprite = entity.sprite;
       sprite.position.x = coordenate.X(Number(ship.x));
       sprite.position.y = coordenate.Y(Number(ship.y)) ;
       sprite.rotation = -Number(ship.angle) + Math.PI/2;
+
+      this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
     }
 
 

@@ -1,0 +1,14 @@
+{
+	"name" : "PixiParticles",
+	"version" : "1.4.1",
+	"description" : "Particle system for PixiJS",
+	"url" : "http://github.com/CloudKidStudio/PixiParticles",
+	"output" : "pixi-particles",
+	"main" : [
+		"src/ParticleUtils.js",
+		"src/Particle.js",
+		"src/PathParticle.js",
+		"src/AnimatedParticle.js",
+		"src/Emitter.js"
+	]
+}
