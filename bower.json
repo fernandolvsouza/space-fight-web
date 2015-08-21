@@ -1,0 +1,21 @@
+{
+  "name": "space-fight-web",
+  "version": "1.0.0",
+  "authors": [
+    "Fernando valente"
+  ],
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4",
+    "pixi-particles": "~1.4.5",
+    "pixi.js": "~3.0.7"
+  }
+}
