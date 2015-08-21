@@ -312,7 +312,6 @@
         //sprite.anchor.y = 1.0;
         //entity.sprite = sprite
         entity.sprite = container;
-
         entity.lastupdate = Date.now();
 
         return entity;
@@ -468,7 +467,7 @@
           //console.log("ships count: " + gamestate.ships.length);
           //finding player
 
-          if(gamestate.player){
+          if(gamestate.player && gamestate.player.type != "dead"){
             if(!this.player){
               if(this.onNewPlayer){
                 this.onNewPlayer(this.player);
@@ -488,6 +487,7 @@
 
             gamestate.ships.push(gamestate.player);
           }else{
+            var lifebar = document.getElementById('progress');
             lifebar.style.width = '0%';
           }         
       
