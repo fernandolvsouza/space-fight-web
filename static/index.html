@@ -497,6 +497,7 @@
             this.gamemousepoint.y = gamepoint.y;
             this.onMouseMove(this.gamemousepoint.x,this.gamemousepoint.y);  
           }
+
         }
         this.renderer.render(this.stage);
       }
@@ -583,6 +584,16 @@
       //console.log({'x':x,'y':y});
       eventsControl.sendEvent("MOUSE_MOVE",{'x':x,'y':y})
   }
+
+  $(document).ready(function() {
+    $(document).mousedown(function() {
+        eventsControl.sendEvent("FIRE",{pressed: true});
+    });
+
+    $(document).mouseup(function() {
+        eventsControl.sendEvent("FIRE",{pressed: false});
+    });
+  });
 
   var lastupdatetime = 0
   var updatetimeBysecond = 0
