@@ -168,40 +168,46 @@
       this.objectsOnStage = objects;
 
       // create ship texture
-      this.addToStage = function(update,coordenate,radarCoordenate,stage){
+      this.addToStage = function(update,coordenate,radarCoordenate,stage,player){
+
         var objectRender;
 
         if(update.type == "circle"){
-          objectRender = new CircleShipRender();
+          objectRender = new CircleShipRender(stage);
         }else if(update.type == "polygon"){
-          objectRender = new PolygonShipRender();
+          objectRender = new PolygonShipRender(stage);
         } else if(update.type == "bullet"){
-          objectRender = new BulletRender();
+          objectRender = new BulletRender(stage);
         }
 
         if(!this.objectsOnStage[update.id]){
           this.objectsOnStage[update.id] = objectRender.createEntity(update,coordenate);
-          console.log(this.objectsOnStage[update.id]);
-          stage.addChild(this.objectsOnStage[update.id].sprite);
-
         }
 
-        objectRender.update(this.objectsOnStage[update.id],update,coordenate,radarCoordenate);
+        objectRender.update(this.objectsOnStage[update.id],update,coordenate,radarCoordenate,player);
 
       }
 
       this.removeFromStage = function(index,stage){
-
+        
         stage.removeChild(this.objectsOnStage[index].sprite)
         this.objectsOnStage[index].sprite = null;
+        
+        if(this.objectsOnStage[index].radarpoint){
+          stage.removeChild(this.objectsOnStage[index].name)
+          this.objectsOnStage[index].name = null;
+        }
+
         if(this.objectsOnStage[index].radarpoint)
           document.getElementById('radar').removeChild(this.objectsOnStage[index].radarpoint);
+
         delete this.objectsOnStage[index];
 
       }
     }
 
-    var BulletRender = function(){
+    var BulletRender = function(stage){
+      this.stage = stage;
       this.textures = {
         green: PIXI.Texture.fromImage("gbullet.png"),
         orange: PIXI.Texture.fromImage("obullet.png"),
@@ -275,6 +281,8 @@
         entity.sprite = container;
         entity.lastupdate = Date.now();
 
+        this.stage.addChild(entity.sprite);
+
         return entity;
     }
 
@@ -303,7 +311,8 @@
       radarpoint.style.left = radarCoordenate.X(Number(ship.x));
     } 
 
-    var CircleShipRender = function(){
+    var CircleShipRender = function(stage){
+      this.stage = stage;
       this.circles = {
         green: PIXI.Texture.fromImage("green.png"),
         orange: PIXI.Texture.fromImage("orange.png"),
@@ -324,16 +333,34 @@
 
         entity.sprite = sprite;
         entity.radarpoint = this.createRadarPoint();
+        this.stage.addChild(entity.sprite);
+
+        if(!ship.isbot){
+          entity.name = new PIXI.Text("", {font:"12px Arial", fill:"green"});
+          entity.name.anchor.x = 0.5;
+          entity.name.anchor.y = 0.5;
+          this.stage.addChild(entity.name);
+        }
+        
 
         return entity;
     }
 
-    CircleShipRender.prototype.update = function(entity,ship,coordenate,radarCoordenate){
+    CircleShipRender.prototype.update = function(entity,ship,coordenate,radarCoordenate,player){
       var sprite = entity.sprite;
       sprite.position.x = coordenate.X(Number(ship.x));
       sprite.position.y = coordenate.Y(Number(ship.y)) ;
       sprite.rotation = -Number(ship.angle)+ Math.PI/2;
       
+      if(!ship.isbot){
+        entity.name.position.x = sprite.position.x;
+        entity.name.position.y = sprite.position.y - sprite.height*0.75;
+
+        if(player && player.name && player.name != entity.name.text){
+          entity.name.text = player.name;
+        }
+      }
+
       if(sprite.texture != this.circles.orange && ship.isdamaged){
         sprite.texture = this.circles.orange;
       }
@@ -341,11 +368,14 @@
       if(sprite.texture == this.circles.orange && !ship.isdamaged){  
         sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
       }
+      
+     
 
       this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
     }
 
-    var PolygonShipRender = function(){
+    var PolygonShipRender = function(stage){
+      this.stage = stage;
       this.texture = PIXI.Texture.fromImage("ship_texture.png");
     }
 
@@ -449,9 +479,6 @@
 
             gamestate.ships.push(gamestate.player);
           }else{
-            console.log( $('#myModal').css('display'));
-            console.log(gamestate.player);
-            console.log(gamestate.player.typeof);
             var lifebar = document.getElementById('progress');
             lifebar.style.width = '0%';
             if( $('#myModal').css('display') == 'none'){
@@ -472,7 +499,7 @@
           
           // drawing entities
           for (var i = 0; i < entities.length; i++) {
-            this.gameRenderer.addToStage(entities[i],this.coordenate,this.radarCoordenate,this.stage);
+            this.gameRenderer.addToStage(entities[i],this.coordenate,this.radarCoordenate,this.stage,this.player);
           }
 
           //map entities easy access

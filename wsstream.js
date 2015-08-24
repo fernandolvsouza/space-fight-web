@@ -59,10 +59,11 @@ module.exports.createServer = function(server,iserver) {
 		json.scene.player = json.player
 		
 		var id = Number(json.player.id)
-		console.log(json)
+		//console.log(json)
 		//console.log(clients)
 		if(clients[id]){
 			if(clients[id].readyState == 1){
+				json.scene.player.name = clients[id].player.name;
 				clients[id].send(JSON.stringify(json.scene));
 			}
 		}
