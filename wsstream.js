@@ -24,18 +24,19 @@ module.exports.createServer = function(server,iserver) {
 		});
 
 		ws.on("message", function(message) {
-			console.log("message from client: " + message)
+			console.log("message from client: " + message);
 			var json = JSON.parse(message);
-			if(json.event == 'NEW_PLAYER'){
-				this.player = {"id":this.id,"name":json.payload.user.name}
+			if(json.event == 'BE_BORN'){
+				console.log("this.player : " + this.player);
+				this.player.name = json.payload.user.name;
 				console.log(this.player);
 			}
 			if(!json['payload']){
-				json['payload'] = {}
+				json['payload'] = {};
 			}
-			json['payload']['user'] = this.player
+			json['payload']['user'] = this.player;
 
-			iserver.broadcast(json)
+			iserver.broadcast(json);
 
 		});
 
@@ -45,6 +46,10 @@ module.exports.createServer = function(server,iserver) {
 
 		ws.id = seq_socket ++;
 		clients[ws.id] = ws;
+		
+		ws.player = {"id":ws.id};
+		iserver.broadcast({event:"NEW_PLAYER",payload:{user:ws.player}})
+
 	 	console.log("client in");
 	});
 

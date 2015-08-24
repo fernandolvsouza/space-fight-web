@@ -58,13 +58,17 @@
         background-color: red;
       }
 
+      .front {
+        z-index:1000;
+      }
+
     </style>
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body>
   <div id="container">
-  <div id="myModal" class="modal fade">
+  <div id="myModal" class="modal fade front">
     <div class="modal-dialog">
       <div class="modal-content">
         
@@ -159,49 +163,6 @@
         return {x:this.X(point.x),y:this.Y(point.y)}
       }
     }
-
-    /*function BulletPool(){
-
-      //bullets
-      this.textures = {
-        green: PIXI.Texture.fromImage("gbullet.png"),
-        orange: PIXI.Texture.fromImage("obullet.png"),
-        yellow: PIXI.Texture.fromImage("ybullet.png"),
-        blue: PIXI.Texture.fromImage("bbullet.png")
-      }
-
-      this.min = 30;
-      this.max = 100;
-      this.ids = 0;
-      this.sprites = []
-      
-      this.getSprite = function(){
-        console.log("bullet sprites count : " + this.sprites.length);
-        for(var i in this.sprites){
-          if(this.sprites[i].free){
-            this.sprites[i].free = false;
-            return this.sprites[i];
-          }
-        }
-        var sprite = new PIXI.Sprite(this.textures.green);
-        sprite.internalId = (this.ids++)-1;
-        sprite.free = false;
-        this.sprites.push(sprite);
-        console.log("new bullet sprite");
-        console.log(sprite);
-        return sprite;
-      }
-
-      this.releaseSprite = function(sprite){
-        sprite.free = true;
-        var index = this.sprites.indexOf(sprite);
-        if(index > -1){
-           this.sprites.splice(index, 1);  
-        }
-      }
-    }*/
-
-
 
     function GameRenderer(objects){
       this.objectsOnStage = objects;
@@ -460,6 +421,7 @@
         this.movingbg.width = this.width
         this.movingbg.height = this.height;
       }
+      this.tries = 0
 
       this.update = function(gamestate) {
       
@@ -487,8 +449,15 @@
 
             gamestate.ships.push(gamestate.player);
           }else{
+            console.log( $('#myModal').css('display'));
+            console.log(gamestate.player);
+            console.log(gamestate.player.typeof);
             var lifebar = document.getElementById('progress');
             lifebar.style.width = '0%';
+            if( $('#myModal').css('display') == 'none'){
+              $('#myModal').modal('show');
+            }
+
           }         
       
           //moving background
@@ -498,7 +467,8 @@
             this.movingbg.tilePosition.y = (this.player.y*this.coordenate.scale)
           }
 
-          var entities = gamestate.ships.concat(gamestate.bullets);
+          //console.log(gamestate.trash);
+          var entities = gamestate.ships.concat(gamestate.bullets).concat(gamestate.trash);
           
           // drawing entities
           for (var i = 0; i < entities.length; i++) {
@@ -557,7 +527,7 @@
 
       this.addPlayer = function(){
         var player_name = document.getElementById("player_name").value;
-        this.sendEvent('NEW_PLAYER',{"user":{"name":player_name}})
+        this.sendEvent('BE_BORN',{"user":{"name":player_name}})
       }
 
       this.initPlayerEventListener = function(){
