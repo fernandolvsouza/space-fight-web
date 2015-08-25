@@ -56,15 +56,14 @@ module.exports.createServer = function(server,iserver) {
 
 	wss.sendDataToClient  = function(data){
 		var json = JSON.parse(data.toString())
-		json.scene.player = json.player
-		
-		var id = Number(json.player.id)
-		//console.log(json)
+						//player id
+		var id = Number(json[0][0])
+		console.log(json)
 		//console.log(clients)
 		if(clients[id]){
 			if(clients[id].readyState == 1){
-				json.scene.player.name = clients[id].player.name;
-				clients[id].send(JSON.stringify(json.scene));
+				json[0].push(clients[id].player.name);
+				clients[id].send(JSON.stringify(json));
 			}
 		}
 	}
