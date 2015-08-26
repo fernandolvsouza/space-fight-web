@@ -1,12 +1,12 @@
 /*
 * Streaming game to client  needs iserver
 */
-
+var lz = require('lz-string');
 
 module.exports.createServer = function(server,iserver) {
 	var seq_socket = 0;
 	var WebSocketServer = require("ws").Server
-	var wss = new WebSocketServer({server: server})
+	var wss = new WebSocketServer({server: server,perMessageDeflate:false})
 
 	var clients = {};
 	wss.on("connection", function(ws) {
@@ -63,7 +63,8 @@ module.exports.createServer = function(server,iserver) {
 		if(clients[id]){
 			if(clients[id].readyState == 1){
 				json[0].push(clients[id].player.name);
-				clients[id].send(JSON.stringify(json));
+				var message = JSON.stringify(json);
+				clients[id].send(message,{ binary: true});
 			}
 		}
 	}
