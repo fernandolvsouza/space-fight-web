@@ -29,7 +29,7 @@ module.exports.createServer = function(server,iserver) {
 			if(json.event == 'BE_BORN'){
 				console.log("this.player : " + this.player);
 				this.player.name = json.payload.user.name;
-				console.log(this.player);
+				//console.log(this.player);
 			}
 			if(!json['payload']){
 				json['payload'] = {};
@@ -55,16 +55,15 @@ module.exports.createServer = function(server,iserver) {
 
 
 	wss.sendDataToClient  = function(data){
-		var json = JSON.parse(data.toString())
-						//player id
-		var id = Number(json[0][0])
-		console.log(json)
-		//console.log(clients)
+		var array = JSON.parse(data.toString());
+		//player id
+		var id = Number(array[3])
 		if(clients[id]){
 			if(clients[id].readyState == 1){
-				json[0].push(clients[id].player.name);
-				var message = JSON.stringify(json);
-				clients[id].send(message,{ binary: true});
+				//clients[id].player.name
+				
+
+				clients[id].send(lz.compress(data)+'\n',{ binary: true});
 			}
 		}
 	}

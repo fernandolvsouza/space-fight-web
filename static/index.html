@@ -100,13 +100,6 @@
   
   <script>
 
-    $('#myModal').modal('show');
-    var host = location.origin.replace(/^http/, 'ws')
-    var ws = new WebSocket(host);
-    var stream = null;
-    var stream_count = 0;
-    var laststreamtime = 0;
-
     function decodeUtf8(arrayBuffer) {
       var result = "";
       var i = 0;
@@ -147,33 +140,112 @@
       return result;
     }
 
-    ws.onmessage = function (event) {
-      console.log(event.data);
+    function buildmessage(data){
+      //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
+      var type_len = [8,8,8,5,4]
+      var type_names = ['circle','polygon','dead','bullet','garbage']
+      var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged']
 
-      var reader = new FileReader();
-      reader.addEventListener("loadend", function() {
-        console.log(decodeUtf8(reader.result));
-      });
-      reader.readAsArrayBuffer(event.data);
-      //gamestate = LZString.decompress(gamestate);
-/*      var datas =  event.data.split('\n');
-      for (var i = 0; i <= datas.length; i++) {
-        if(typeof(datas[i]) !=  "undefined" && datas[i] != ""){
-          stream = JSON.parse(datas[i]);
-          stream_count ++;    
+      var ships = [];
+      var bullets = [];
+      var garbages = [];
+      var totalbots = data.shift();
+      var totalplayers = data.shift();
+      var j = 0;
+      var entity = {}
+      
+      for(var i in data){
+        entity[attrs[j]] = data[i];
+        if(!isNaN(entity.type)  && (j == type_len[entity.type]-1)){
+          if(i == 7){
+            player = entity;
+          }else if(type_names[entity.type] == 'circle'){
+            ships.push(entity);
+          }else if(type_names[entity.type] == 'dead'){
+            ships.push(entity);
+          }else if(type_names[entity.type] == 'polygon'){
+            ships.push(entity);
+          }else if(type_names[entity.type] == 'bullet'){
+            bullets.push(entity);
+          }else if(type_names[entity.type] == 'garbage'){
+            garbages.push(entity);
+          }else{
+            console.log("error");
+          }
+          entity.type = type_names[entity.type];
+          entity = {}
+          j = 0;
+        }else{
+          j++;
         }
-      };
-  */    
-      
-
-      var now = performance.now();
-      var delta = now - laststreamtime
-      if(delta > 1000){
-        console.log("datastreams by second : " + stream_count*1000/(delta));
-        stream_count = 0;
-        laststreamtime = now;
       }
+
+      gamestate = {}
+      gamestate.player = player
+      gamestate.ships = ships
+      gamestate.bullets = bullets
+      gamestate.garbages = garbages
+      gamestate.totalbots = totalbots
+      gamestate.totalplayers = totalplayers
+      return gamestate
+    }
+
+
+    $('#myModal').modal('show');
+    var host = location.origin.replace(/^http/, 'ws')
+    var ws = new WebSocket(host);
+    var stream = null;
+    var stream_count = 0;
+    var laststreamtime = 0;
+  
+    var buffer = new ArrayBuffer(2000);
+    var buffer_index = 0;
+
+    ws.binaryType = 'arraybuffer';
+    ws.onmessage = function (event) {
+
+      var msg = null;
       
+      var data = new Uint8Array(event.data);
+      //console.log(data.length);
+      for(var i=0;i < data.length;i++){
+         
+        if(String.fromCharCode(data[i]) == '\n'){ //\n
+          msg = new Uint8Array(buffer_index);
+          for(var j=0;j<buffer_index;j++){
+            msg[j] = buffer[j];
+          }         
+          //console.log(msg);
+          buffer_index = 0;
+        }else{
+          buffer[buffer_index] = data[i];
+          buffer_index++;
+        }
+      }
+
+      //console.log(decodeUtf8(data));
+      if(msg){
+        try{
+          var decoded_msg = decodeUtf8(msg);
+          var decompressed_msg = LZString.decompress(decoded_msg);
+          stream = buildmessage(JSON.parse(decompressed_msg));
+        }catch(e){
+          console.log("decoded_msg : " + decoded_msg);
+          console.log("decompressed_msg : " + decompressed_msg);
+        }        
+        
+        stream_count ++;
+
+        var now = performance.now();
+        var delta = now - laststreamtime
+        if(delta > 1000){
+          // /console.log("datastreams by second : " + stream_count*1000/(delta));
+          stream_count = 0;
+          laststreamtime = now;
+        }
+      }
+        
+
     };
     
     function CoordenateTranform(refpoint,scale,maxwidth,maxheight){
@@ -220,7 +292,6 @@
       this.addToStage = function(update,coordenate,radarCoordenate,stage,player){
 
         var objectRender;
-
         if(update.type == "circle"){
           objectRender = new CircleShipRender(stage);
         }else if(update.type == "polygon"){
@@ -505,7 +576,7 @@
       this.update = function(gamestate) {
       
         if(gamestate){
-          console.log(gamestate);
+          //console.log(gamestate);
           //console.log("ships count: " + gamestate.ships.length);
           //finding player
 
@@ -545,7 +616,7 @@
           }
 
           //console.log(gamestate.trash);
-          var entities = gamestate.ships.concat(gamestate.bullets).concat(gamestate.trash);
+          var entities = gamestate.ships.concat(gamestate.bullets).concat(gamestate.garbages);
           
           // drawing entities
           for (var i = 0; i < entities.length; i++) {
@@ -685,7 +756,7 @@
     updatetimeBysecond = updatetimeBysecond + delta;
     
     if(after-lastupdatetime > 1000){
-      console.log("update time lost by second: " +updatetimeBysecond+  "miliseconds");
+      //console.log("update time lost by second: " +updatetimeBysecond+  "miliseconds");
       lastupdatetime = after;
       updatetimeBysecond = 0;
     }

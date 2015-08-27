@@ -7,8 +7,7 @@ module.exports.createServer = function(wsserver){
 
 	var oserver = net.createServer(function (socket) {
 
-		socket.on('data', function(data) {
-			
+		socket.on('data', function(data) {			
 			data = data.toString()
 			for(var i in data){
 				if(data[i] == '\n'){
