@@ -95,7 +95,7 @@
   <script src="js/bootstrap.min.js"></script>
   <script src="bower_components/pixi.js/bin/pixi.js"></script>
   <script src="bower_components/pixi-particles/dist/pixi-particles.min.js"></script>
-  <script src="lz-string/libs/lz-string.min.js"></script>
+  <script src="lz-string/libs/lz-string.js"></script>
   
   
   <script>
@@ -115,6 +115,7 @@
       }
 
       while (i < data.length) {
+        //console.log(String.fromCharCode(data[i]))
         c = data[i];
 
         if (c < 128) {
@@ -204,10 +205,10 @@
     ws.binaryType = 'arraybuffer';
     ws.onmessage = function (event) {
 
-      var msg = null;
+      var msg = new Uint8Array(event.data);
       
-      var data = new Uint8Array(event.data);
-      //console.log(data.length);
+      /*var data = new Uint8Array(event.data);
+      console.log(event.data);
       for(var i=0;i < data.length;i++){
          
         if(String.fromCharCode(data[i]) == '\n'){ //\n
@@ -221,17 +222,22 @@
           buffer[buffer_index] = data[i];
           buffer_index++;
         }
-      }
+      }*/
 
-      //console.log(decodeUtf8(data));
       if(msg){
         try{
-          var decoded_msg = decodeUtf8(msg);
-          var decompressed_msg = LZString.decompress(decoded_msg);
+          //var decoded_msg = decodeUtf8(msg);
+          var decompressed_msg = LZString.decompressFromUint8Array(msg);
           stream = buildmessage(JSON.parse(decompressed_msg));
         }catch(e){
-          console.log("decoded_msg : " + decoded_msg);
-          console.log("decompressed_msg : " + decompressed_msg);
+          console.log(e.stack);
+          console.log("msg");
+          console.log(msg);
+          //console.log("decoded_msg");
+          //console.log(decoded_msg);
+          console.log("decompressed_msg");
+          console.log(decompressed_msg);
+          ws.close();
         }        
         
         stream_count ++;

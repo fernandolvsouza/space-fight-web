@@ -61,9 +61,7 @@ module.exports.createServer = function(server,iserver) {
 		if(clients[id]){
 			if(clients[id].readyState == 1){
 				//clients[id].player.name
-				
-
-				clients[id].send(lz.compress(data)+'\n',{ binary: true});
+				clients[id].send(lz.compressToUint8Array(data),{ binary: true});
 			}
 		}
 	}
