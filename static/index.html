@@ -143,9 +143,9 @@
 
     function buildmessage(data){
       //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-      var type_len = [8,8,8,5,4]
+      var type_len = [9,9,9,5,4]
       var type_names = ['circle','polygon','dead','bullet','garbage']
-      var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged']
+      var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name']
 
       var ships = [];
       var bullets = [];
@@ -158,7 +158,7 @@
       for(var i in data){
         entity[attrs[j]] = data[i];
         if(!isNaN(entity.type)  && (j == type_len[entity.type]-1)){
-          if(i == 7){
+          if(i == 8){
             player = entity;
           }else if(type_names[entity.type] == 'circle'){
             ships.push(entity);
@@ -207,23 +207,6 @@
 
       var msg = new Uint8Array(event.data);
       
-      /*var data = new Uint8Array(event.data);
-      console.log(event.data);
-      for(var i=0;i < data.length;i++){
-         
-        if(String.fromCharCode(data[i]) == '\n'){ //\n
-          msg = new Uint8Array(buffer_index);
-          for(var j=0;j<buffer_index;j++){
-            msg[j] = buffer[j];
-          }         
-          //console.log(msg);
-          buffer_index = 0;
-        }else{
-          buffer[buffer_index] = data[i];
-          buffer_index++;
-        }
-      }*/
-
       if(msg){
         try{
           //var decoded_msg = decodeUtf8(msg);
@@ -245,7 +228,7 @@
         var now = performance.now();
         var delta = now - laststreamtime
         if(delta > 1000){
-          // /console.log("datastreams by second : " + stream_count*1000/(delta));
+          console.log("datastreams by second : " + stream_count*1000/(delta));
           stream_count = 0;
           laststreamtime = now;
         }
@@ -472,7 +455,7 @@
         return entity;
     }
 
-    CircleShipRender.prototype.update = function(entity,ship,coordenate,radarCoordenate,player){
+    CircleShipRender.prototype.update = function(entity,ship,coordenate,radarCoordenate){
       var sprite = entity.sprite;
       sprite.position.x = coordenate.X(Number(ship.x));
       sprite.position.y = coordenate.Y(Number(ship.y)) ;
@@ -482,8 +465,8 @@
         entity.name.position.x = sprite.position.x;
         entity.name.position.y = sprite.position.y - sprite.height*0.75;
 
-        if(player && player.name && player.name != entity.name.text){
-          entity.name.text = player.name;
+        if(ship && ship.name && ship.name != entity.name.text){
+          entity.name.text = ship.name;
         }
       }
 
@@ -493,9 +476,7 @@
       
       if(sprite.texture == this.circles.orange && !ship.isdamaged){  
         sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
-      }
-      
-     
+      }     
 
       this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
     }
