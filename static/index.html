@@ -287,6 +287,8 @@
           objectRender = new PolygonShipRender(stage);
         } else if(update.type == "bullet"){
           objectRender = new BulletRender(stage);
+        }else if(update.type == "garbage"){
+          objectRender = new GarbageRender(stage);
         }
 
         if(!this.objectsOnStage[update.id]){
@@ -315,6 +317,34 @@
       }
     }
 
+
+    var GarbageRender = function(stage){
+      this.stage = stage;
+      this.texture = PIXI.Texture.fromImage('particle.png')
+      
+    }
+
+    GarbageRender.prototype.createEntity = function(garbage,coordenate){
+        var entity = {};
+
+        var sprite = new PIXI.Sprite(this.texture) ;      
+        sprite.anchor.x = 0.5;
+        sprite.anchor.y = 0.5;
+        sprite.width = sprite.height = 20 * coordenate.scale;
+
+        entity.sprite = sprite;
+        this.stage.addChild(entity.sprite);
+        return entity;
+    }
+
+    GarbageRender.prototype.update = function(entity,garbage,coordenate,radarCoordenate){
+      var sprite = entity.sprite;
+      sprite.tint = 0xd9db1c;
+      sprite.position.x = coordenate.X(Number(garbage.x));
+      sprite.position.y = coordenate.Y(Number(garbage.y)) ;
+      sprite.rotation = -Number(garbage.angle)+ Math.PI/2;
+    }
+
     var BulletRender = function(stage){
       this.stage = stage;
       this.textures = {
@@ -324,7 +354,6 @@
         blue: PIXI.Texture.fromImage("bbullet.png"),
         particle : PIXI.Texture.fromImage('particle.png')
       }
-      
     }
     
     BulletRender.prototype.createEntity = function(bullet,coordenate){
@@ -626,7 +655,7 @@
 
           //send Mouse Position
           var point = this.renderer.plugins.interaction.mouse.global;
-          var gamepoint = {x:this.coordenate.unX(point.x),y:this.coordenate.unY(point.y)}
+          var gamepoint = {x:Number(this.coordenate.unX(point.x).toFixed(2)),y:Number(this.coordenate.unY(point.y).toFixed(2))}
           if(this.gamemousepoint.x != gamepoint.x || this.gamemousepoint.y != gamepoint.y){
             this.gamemousepoint.x = gamepoint.x;
             this.gamemousepoint.y = gamepoint.y;
@@ -644,26 +673,34 @@
     
       this.ws = ws;
       this.kd = kd;
+      this.EVENTS = ['LEFT', 'RIGHT', 'UP', 'DOWN', 'FIRE', 'MOUSE_MOVE', 'NEW_PLAYER', 'REMOVE_PLAYER', 'BE_BORN', 'DIE'];
 
       this.sendEvent = function (type,payload){
-        var json = {event: type}
+        var array = [this.EVENTS.indexOf(type)]
         if(payload){
-          json["payload"] = payload;
+          for(var i in payload){
+            if(typeof payload[i] == 'boolean'){
+              payload[i] = payload[i] ? 1 : 0;
+            }
+            array.push(payload[i]);
+          }
         }
-        this.sendObject(json);  
+
+        this.sendObject(array);  
       }
 
       this.sendObject = function(obj){
         //console.log("sendObject");
         //console.log(obj);
         if(this.ws.readyState == 1){
-          this.ws.send(JSON.stringify(obj)+ "\n")
+          this.ws.send(LZString.compressToUint8Array(JSON.stringify(obj)+ "\n"),{ binary: true, mask: true })
+
         }
       }
 
       this.addPlayer = function(){
         var player_name = document.getElementById("player_name").value;
-        this.sendEvent('BE_BORN',{"user":{"name":player_name}})
+        this.sendEvent('BE_BORN',{"name":player_name})
       }
 
       this.initPlayerEventListener = function(){

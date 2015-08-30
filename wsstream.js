@@ -2,6 +2,7 @@
 * Streaming game to client  needs iserver
 */
 var lz = require('lz-string');
+var EVENTS = ['LEFT', 'RIGHT', 'UP', 'DOWN', 'FIRE', 'MOUSE_MOVE', 'NEW_PLAYER', 'REMOVE_PLAYER', 'BE_BORN', 'DIE'];
 
 module.exports.createServer = function(server,iserver) {
 	var seq_socket = 0;
@@ -17,26 +18,24 @@ module.exports.createServer = function(server,iserver) {
 			delete clients[ws.id];
 
 			if(this.player){
-				iserver.broadcast({event:"REMOVE_PLAYER",payload:{user:this.player}})
+				iserver.broadcast([this.player.id,EVENTS.indexOf("REMOVE_PLAYER")])
 			}
 			console.log("client out :: number of clients = " + clients.length);	
 	
 		});
 
 		ws.on("message", function(message) {
+			message = lz.decompressFromUint8Array(message);
 			console.log("message from client: " + message);
-			var json = JSON.parse(message);
-			if(json.event == 'BE_BORN'){
-				console.log("this.player : " + this.player);
-				this.player.name = json.payload.user.name;
-				//console.log(this.player);
-			}
-			if(!json['payload']){
-				json['payload'] = {};
-			}
-			json['payload']['user'] = this.player;
 
-			iserver.broadcast(json);
+			var array = JSON.parse(message);
+			if(array[0] == EVENTS.indexOf('BE_BORN')){
+				console.log("this.player : " + this.player);
+				this.player.name = array[1];
+			}
+
+			array.unshift(this.player.id); // sempre coloca o id na frente
+			iserver.broadcast(array);
 
 		});
 
@@ -48,7 +47,7 @@ module.exports.createServer = function(server,iserver) {
 		clients[ws.id] = ws;
 		
 		ws.player = {"id":ws.id};
-		iserver.broadcast({event:"NEW_PLAYER",payload:{user:ws.player}})
+		iserver.broadcast([ws.player.id,EVENTS.indexOf("NEW_PLAYER")]);
 
 	 	console.log("client in");
 	});

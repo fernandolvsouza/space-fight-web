@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "dependencies": {
     "express": "^4.4.5",
-    "ws": "0.4.x"
+    "ws": "0.4.x",
+    "lz-string": "x.x.x"
   },
   "engines": {
     "node": "0.10.x"
