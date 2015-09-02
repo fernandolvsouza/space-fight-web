@@ -542,9 +542,11 @@
 
 
     function Game(){
+      var gamewidth = 100;
       this.gamemousepoint = {x:0,y:0};
       this.entitiesOnStage = {};
-      
+      this.gameEdges = [[-width/2,0],[width/2, 0],[width/2, width],[-width/2, width]];
+
 
       this.gameRenderer = new GameRenderer(this.entitiesOnStage);
       
@@ -564,6 +566,14 @@
       this.movingbg.tilePosition.y = 0;
 
       this.stage.addChild(this.movingbg);
+
+      this.edges = new PIXI.Graphics();
+
+      // set a fill and line style
+      this.edges.beginFill(0xFF3300);
+      this.edges.lineStyle(10, 0xffd900, 1);
+      this.stage.addChild(this.edges);
+
       
       //create coordenate tranform for radar
       var radarContainer = document.getElementById('radar');
@@ -661,6 +671,13 @@
             this.gamemousepoint.y = gamepoint.y;
             this.onMouseMove(this.gamemousepoint.x,this.gamemousepoint.y);  
           }
+          this.edges.clear();
+          this.edges.moveTo(this.coordenate.X(this.gameEdges[1][0]),this.coordenate.Y(this.gameEdges[1][1]));
+          this.edges.lineTo(this.coordenate.X(this.gameEdges[2][0]),this.coordenate.Y(this.gameEdges[2][1]));
+          this.edges.lineTo(this.coordenate.X(this.gameEdges[3][0]),this.coordenate.Y(this.gameEdges[3][1]));
+          this.edges.lineTo(this.coordenate.X(this.gameEdges[4][0]),this.coordenate.Y(this.gameEdges[4][1]));
+          this.edges.lineTo(this.coordenate.X(this.gameEdges[1][0]),this.coordenate.Y(this.gameEdges[1][1]));
+          this.edges.endFill();
 
         }
         this.renderer.render(this.stage);
