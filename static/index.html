@@ -542,10 +542,11 @@
 
 
     function Game(){
-      var gamewidth = 100;
+      var gamewidth = 500;
+      this.gamewidth = gamewidth;
       this.gamemousepoint = {x:0,y:0};
       this.entitiesOnStage = {};
-      this.gameEdges = [[-width/2,0],[width/2, 0],[width/2, width],[-width/2, width]];
+      this.gameEdges = [[-gamewidth/2,0],[gamewidth/2, 0],[gamewidth/2, gamewidth],[-gamewidth/2, gamewidth]];
 
 
       this.gameRenderer = new GameRenderer(this.entitiesOnStage);
@@ -566,15 +567,6 @@
       this.movingbg.tilePosition.y = 0;
 
       this.stage.addChild(this.movingbg);
-
-      this.edges = new PIXI.Graphics();
-
-      // set a fill and line style
-      this.edges.beginFill(0xFF3300);
-      this.edges.lineStyle(10, 0xffd900, 1);
-      this.stage.addChild(this.edges);
-
-      
       //create coordenate tranform for radar
       var radarContainer = document.getElementById('radar');
       this.radarCoordenate = new CoordenateTranform(null,2,radarContainer.clientWidth,
@@ -582,6 +574,19 @@
 
       //create coordenate tranform for stage
       this.coordenate = new CoordenateTranform(null,15,this.width,this.height)
+
+
+      this.edges = new PIXI.Graphics();
+      this.edges.beginFill(0x000000,0);
+      this.edges.lineStyle(1, 0xffd900, 1);
+      this.edges.moveTo(this.coordenate.scale*this.gameEdges[0][0],this.coordenate.scale*this.gameEdges[0][1]);
+      this.edges.lineTo(this.coordenate.scale*this.gameEdges[1][0],this.coordenate.scale*this.gameEdges[1][1]);
+      this.edges.lineTo(this.coordenate.scale*this.gameEdges[2][0],this.coordenate.scale*this.gameEdges[2][1]);
+      this.edges.lineTo(this.coordenate.scale*this.gameEdges[3][0],this.coordenate.scale*this.gameEdges[3][1]);
+      this.edges.lineTo(this.coordenate.scale*this.gameEdges[0][0],this.coordenate.scale*this.gameEdges[0][1]);
+      this.edges.endFill();
+
+      this.stage.addChild(this.edges);
 
       // create a renderer instance.
       this.renderer = PIXI.autoDetectRenderer(this.width, this.height,{ transparent: true });
@@ -602,6 +607,7 @@
       this.update = function(gamestate) {
       
         if(gamestate){
+          //this.edges.clear();
           //console.log(gamestate);
           //console.log("ships count: " + gamestate.ships.length);
           //finding player
@@ -637,9 +643,14 @@
           //moving background
           //console.log(this.player)
           if(this.player){            
-            this.movingbg.tilePosition.x = -(this.player.x*this.coordenate.scale)
-            this.movingbg.tilePosition.y = (this.player.y*this.coordenate.scale)
+            this.movingbg.tilePosition.x = -(this.player.x*this.coordenate.scale).toFixed(0);
+            this.movingbg.tilePosition.y = (this.player.y*this.coordenate.scale).toFixed(0);
           }
+
+
+          this.edges.position.x = this.coordenate.X(0).toFixed(0);
+          this.edges.position.y = this.coordenate.Y(this.gamewidth).toFixed(0);          
+          
 
           //console.log(gamestate.trash);
           var entities = gamestate.ships.concat(gamestate.bullets).concat(gamestate.garbages);
@@ -671,18 +682,9 @@
             this.gamemousepoint.y = gamepoint.y;
             this.onMouseMove(this.gamemousepoint.x,this.gamemousepoint.y);  
           }
-          this.edges.clear();
-          this.edges.moveTo(this.coordenate.X(this.gameEdges[1][0]),this.coordenate.Y(this.gameEdges[1][1]));
-          this.edges.lineTo(this.coordenate.X(this.gameEdges[2][0]),this.coordenate.Y(this.gameEdges[2][1]));
-          this.edges.lineTo(this.coordenate.X(this.gameEdges[3][0]),this.coordenate.Y(this.gameEdges[3][1]));
-          this.edges.lineTo(this.coordenate.X(this.gameEdges[4][0]),this.coordenate.Y(this.gameEdges[4][1]));
-          this.edges.lineTo(this.coordenate.X(this.gameEdges[1][0]),this.coordenate.Y(this.gameEdges[1][1]));
-          this.edges.endFill();
-
         }
         this.renderer.render(this.stage);
       }
-
     }
 
  
