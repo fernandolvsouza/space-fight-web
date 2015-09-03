@@ -143,9 +143,9 @@
 
     function buildmessage(data){
       //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-      var type_len = [9,9,9,5,5]
+      var type_len = [10,10,10,5,5]
       var type_names = ['circle','polygon','dead','bullet','garbage']
-      var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name']
+      var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points']
 
       var ships = [];
       var bullets = [];
@@ -158,7 +158,7 @@
       for(var i in data){
         entity[attrs[j]] = data[i];
         if(!isNaN(entity.type)  && (j == type_len[entity.type]-1)){
-          if(i == 8){
+          if(i == 9){
             player = entity;
           }else if(type_names[entity.type] == 'circle'){
             ships.push(entity);
@@ -490,24 +490,29 @@
       sprite.position.y = coordenate.Y(Number(ship.y)) ;
       sprite.rotation = -Number(ship.angle)+ Math.PI/2;
       
-      if(!ship.isbot){
-        entity.name.position.x = sprite.position.x;
-        entity.name.position.y = sprite.position.y - sprite.height*0.75;
+      if(ship){
+        if(!ship.isbot){
+          entity.name.position.x = sprite.position.x;
+          entity.name.position.y = sprite.position.y - sprite.height*0.75;
 
-        if(ship && ship.name && ship.name != entity.name.text){
-          entity.name.text = ship.name;
+          var name = ship.points + (ship.name ? " " + ship.name : "") 
+
+          if(name != entity.name.text){
+            console.log("nameee")
+            entity.name.text = name;
+          }
         }
-      }
 
-      if(sprite.texture != this.circles.orange && ship.isdamaged){
-        sprite.texture = this.circles.orange;
-      }
-      
-      if(sprite.texture == this.circles.orange && !ship.isdamaged){  
-        sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
-      }     
+        if(sprite.texture != this.circles.orange && ship.isdamaged){
+          sprite.texture = this.circles.orange;
+        }
+        
+        if(sprite.texture == this.circles.orange && !ship.isdamaged){  
+          sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
+        }     
 
-      this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
+        this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
+      }
     }
 
     var PolygonShipRender = function(stage){
