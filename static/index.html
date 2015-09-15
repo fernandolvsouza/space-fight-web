@@ -143,8 +143,8 @@
 
     function buildmessage(data){
       //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-      var type_len = [10,10,10,5,5]
-      var type_names = ['circle','polygon','dead','bullet','garbage']
+      var type_len = [10,10,10,5,5,31]
+      var type_names = ['circle','polygon','dead','bullet','garbage','rank']
       var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points']
 
       var ships = [];
@@ -157,6 +157,16 @@
       
       for(var i in data){
         entity[attrs[j]] = data[i];
+        if(attrs[j] == 'type'){
+          if(type_names[entity.type] == 'rank'){
+            entity.rank = []
+            var limit = i + type_len[entity.type]
+            while(i< limit){
+              entity.rank.push({id : data[i],name:data[i+1],points:data[i+2]})
+              i=i+3;
+            }
+          }
+        }
         if(!isNaN(entity.type)  && (j == type_len[entity.type]-1)){
           if(i == 9){
             player = entity;
@@ -612,6 +622,7 @@
       this.update = function(gamestate) {
       
         if(gamestate){
+          console.log(gamestate.rank);
           //this.edges.clear();
           //console.log(gamestate);
           //console.log("ships count: " + gamestate.ships.length);
