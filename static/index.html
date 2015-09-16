@@ -23,6 +23,31 @@
         overflow: hidden;
       }
 
+      ul.rank{
+        list-style-type: decimal;
+        width:200px;
+        min-height: 20px;
+        position: absolute;
+        top:20px;
+        left:3px;
+        background-color: transparent;
+        border: 2px solid;
+        border-color: #006600;
+        -webkit-border-radius: 6px;
+        -moz-border-radius: 6px;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      ul.rank > li {
+        width:100%;
+        height:30px;
+
+        font-size: 20px;
+        font-weight: bold;
+        color: green;
+      }
+
       .lifebar{
         width:300px;
         height:20px;
@@ -81,6 +106,9 @@
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
 
+  <ul id="rank" class="rank">
+
+  </ul>
   <div id="radar" class="radar">
   </div>
   <!--div id="lifebar" class="lifebar">
@@ -143,30 +171,34 @@
 
     function buildmessage(data){
       //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-      var type_len = [10,10,10,5,5,31]
-      var type_names = ['circle','polygon','dead','bullet','garbage','rank']
+      var type_len = [10,10,10,5,5,0,31]
+      var type_names = ['circle','polygon','dead','bullet','garbage','edge','rank']
       var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points']
 
       var ships = [];
       var bullets = [];
       var garbages = [];
+      var rank = null;
       var totalbots = data.shift();
       var totalplayers = data.shift();
       var j = 0;
       var entity = {}
-      
+
       for(var i in data){
         entity[attrs[j]] = data[i];
         if(attrs[j] == 'type'){
           if(type_names[entity.type] == 'rank'){
-            entity.rank = []
-            var limit = i + type_len[entity.type]
-            while(i< limit){
-              entity.rank.push({id : data[i],name:data[i+1],points:data[i+2]})
-              i=i+3;
+            rank = [];
+            var r_data = data.slice(Number(i)+1,i+type_len[entity.type]);
+            for(var z=0;z<r_data.length;z+=3){
+              rank.push({id:r_data[z],name:r_data[z+1],points:r_data[z+2]}); 
             }
+
+            j=0;
+            continue;
           }
         }
+
         if(!isNaN(entity.type)  && (j == type_len[entity.type]-1)){
           if(i == 9){
             player = entity;
@@ -192,13 +224,14 @@
       }
 
       gamestate = {}
-      gamestate.player = player
-      gamestate.ships = ships
-      gamestate.bullets = bullets
-      gamestate.garbages = garbages
-      gamestate.totalbots = totalbots
-      gamestate.totalplayers = totalplayers
-      return gamestate
+      if(rank) gamestate.rank = rank;
+      gamestate.player = player;
+      gamestate.ships = ships;
+      gamestate.bullets = bullets;
+      gamestate.garbages = garbages;
+      gamestate.totalbots = totalbots;
+      gamestate.totalplayers = totalplayers;
+      return gamestate;
     }
 
 
@@ -226,8 +259,6 @@
           console.log(e.stack);
           console.log("msg");
           console.log(msg);
-          //console.log("decoded_msg");
-          //console.log(decoded_msg);
           console.log("decompressed_msg");
           console.log(decompressed_msg);
           ws.close();
@@ -422,13 +453,6 @@
           }
         );
         entity.emitter.emit = true;
-        //entity.emitter.particleConstructor = cloudkid.AnimatedParticle;
-
-        //var sprite = new PIXI.Sprite(this.textures.green)
-        //sprite.width = 0.4 * coordenate.scale;
-        //sprite.anchor.x = 0.0;
-        //sprite.anchor.y = 1.0;
-        //entity.sprite = sprite
         entity.sprite = container;
         entity.lastupdate = Date.now();
 
@@ -573,7 +597,7 @@
     }
 
 
-    function Game(){
+    function Game(){  
       var gamewidth = 500;
       this.gamewidth = gamewidth;
       this.gamemousepoint = {x:0,y:0};
@@ -639,11 +663,15 @@
       this.update = function(gamestate) {
       
         if(gamestate){
-          console.log(gamestate.rank);
-          //this.edges.clear();
-          //console.log(gamestate);
-          //console.log("ships count: " + gamestate.ships.length);
-          //finding player
+          if(gamestate.rank){
+            var html = ""
+            for(i in gamestate.rank){
+              html+= ("<li><span class='name'>" + (gamestate.rank[i].name ? gamestate.rank[i].name : "no name") + "</span>" 
+                      +  gamestate.rank[i].points + " pts</li>")
+            }
+            console.log($('#rank'));
+            $('#rank').html(html);
+          }
 
           if(gamestate.player && gamestate.player.type != "dead"){
             if(!this.player){
