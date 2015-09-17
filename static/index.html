@@ -40,12 +40,14 @@
       }
 
       ul.rank > li {
-        width:100%;
+        
         height:30px;
-
         font-size: 20px;
         font-weight: bold;
         color: green;
+      }
+      ul.rank > li > span{
+        float:right;
       }
 
       .lifebar{
@@ -190,6 +192,7 @@
           if(type_names[entity.type] == 'rank'){
             rank = [];
             var r_data = data.slice(Number(i)+1,i+type_len[entity.type]);
+            console.log(r_data);
             for(var z=0;z<r_data.length;z+=3){
               rank.push({id:r_data[z],name:r_data[z+1],points:r_data[z+2]}); 
             }
@@ -538,7 +541,6 @@
       
       if(entity.energybar.width != ship.energy){
         entity.energybar.width = ship.energy;
-        console.log(ship.energy);
       }
       
       if(ship){
@@ -664,12 +666,15 @@
       
         if(gamestate){
           if(gamestate.rank){
+            console.log(gamestate.rank);
             var html = ""
             for(i in gamestate.rank){
-              html+= ("<li><span class='name'>" + (gamestate.rank[i].name ? gamestate.rank[i].name : "no name") + "</span>" 
-                      +  gamestate.rank[i].points + " pts</li>")
+              console.log(("<li>" +(gamestate.rank[i].name ? gamestate.rank[i].name : "no name") + "</li>" ))
+              if(gamestate.rank[i].name != "0"){
+                html+= ("<li>" +(gamestate.rank[i].name ? gamestate.rank[i].name : "no name") + "</li>" )
+              }
             }
-            console.log($('#rank'));
+            //q console.log($('#rank'));
             $('#rank').html(html);
           }
 
