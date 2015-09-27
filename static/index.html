@@ -395,10 +395,6 @@
     var BulletRender = function(stage){
       this.stage = stage;
       this.textures = {
-        green: PIXI.Texture.fromImage("gbullet.png"),
-        orange: PIXI.Texture.fromImage("obullet.png"),
-        yellow: PIXI.Texture.fromImage("ybullet.png"),
-        blue: PIXI.Texture.fromImage("bbullet.png"),
         particle : PIXI.Texture.fromImage('particle.png')
       }
     }
@@ -557,13 +553,11 @@
         }
 
         if(sprite.tint != this.tints.damage && ship.isdamaged){
-          //sprite.texture = this.circles.orange;
           sprite.tint = this.tints.damage;
         }
         
         if(sprite.tint == this.tints.damage && !ship.isdamaged){  
           sprite.tint = ship.isbot ? this.tints.bot : this.tints.normal;
-          //sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
         }     
 
         this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
