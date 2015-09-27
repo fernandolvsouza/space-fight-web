@@ -491,11 +491,10 @@
 
     var CircleShipRender = function(stage){
       this.stage = stage;
-      this.circles = {
-        green: PIXI.Texture.fromImage("green.png"),
-        orange: PIXI.Texture.fromImage("orange.png"),
-        yellow: PIXI.Texture.fromImage("yellow.png"),
-        blue: PIXI.Texture.fromImage("blue.png")
+      this.tints = {
+        bot: 0x00b300,
+        damage: 0xe18410,
+        normal: 0x000099,
       }
     }
     
@@ -504,7 +503,8 @@
     CircleShipRender.prototype.createEntity = function(ship,coordenate){
         var entity = {};
 
-        var sprite = new PIXI.Sprite(ship.isbot ? this.circles.blue : this.circles.green) ;      
+        var sprite = new PIXI.Sprite(PIXI.Texture.fromImage('no-color3.png')) ;
+        sprite.tint = ship.isbot ? this.tints.bot : this.tints.normal;
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
         sprite.width = sprite.height = 4 * coordenate.scale;
@@ -556,12 +556,14 @@
           }
         }
 
-        if(sprite.texture != this.circles.orange && ship.isdamaged){
-          sprite.texture = this.circles.orange;
+        if(sprite.tint != this.tints.damage && ship.isdamaged){
+          //sprite.texture = this.circles.orange;
+          sprite.tint = this.tints.damage;
         }
         
-        if(sprite.texture == this.circles.orange && !ship.isdamaged){  
-          sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
+        if(sprite.tint == this.tints.damage && !ship.isdamaged){  
+          sprite.tint = ship.isbot ? this.tints.bot : this.tints.normal;
+          //sprite.texture = (ship.isbot ? this.circles.blue : this.circles.green);
         }     
 
         this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
