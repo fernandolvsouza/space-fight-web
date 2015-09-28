@@ -172,10 +172,29 @@
     }
 
     function buildmessage(data){
+      var parseRank = function(r_data){
+        var rank = [];
+        //console.log(r_data);
+        for(var z=0;z<r_data.length;z+=3){
+          rank.push({id:r_data[z],name:r_data[z+1],points:r_data[z+2]}); 
+        }
+      }
+
+      var parseEntity = function(data,attrs){
+        for(var i in data){
+        }
+      }
+
+      var attrs_ship = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points']
+      var attrs_bullet = ['type','id','x','y','angle']
+      var attrs_garbage = attrs_base = ['type','id','x','y','radius']
+      var attrs_edge = attrs_rank = []
+
       //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
       var type_len = [10,10,10,5,5,0,31]
-      var type_names = ['circle','polygon','dead','bullet','garbage','edge','rank']
-      var attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points']
+      var type_names = ['circle','polygon','dead','bullet','garbage','edge','rank','base']
+      var type_attr = [ attrs_ship,attrs_ship,attrs_ship,attrs_bullet,
+                        attrs_garbage,attrs_edge,attrs_rank,attrs_base]
 
       var ships = [];
       var bullets = [];
@@ -183,46 +202,28 @@
       var rank = null;
       var totalbots = data.shift();
       var totalplayers = data.shift();
-      var j = 0;
-      var entity = {}
+      var player = parseEntity(data.splice(0,10));
 
-      for(var i in data){
-        entity[attrs[j]] = data[i];
-        if(attrs[j] == 'type'){
-          if(type_names[entity.type] == 'rank'){
-            rank = [];
-            var r_data = data.slice(Number(i)+1,i+type_len[entity.type]);
-            console.log(r_data);
-            for(var z=0;z<r_data.length;z+=3){
-              rank.push({id:r_data[z],name:r_data[z+1],points:r_data[z+2]}); 
-            }
 
-            j=0;
-            continue;
-          }
-        }
+      for(var i=0;i<data.length;i++;){
 
-        if(!isNaN(entity.type)  && (j == type_len[entity.type]-1)){
-          if(i == 9){
-            player = entity;
-          }else if(type_names[entity.type] == 'circle'){
+        var type = data[i];
+        var sub = data.slice(i+1,i+type_len[entity.type])
+        if(type_names[type] == 'rank'){
+          rank = parseRank(sub);
+        }else{
+          var entity = parseEntity(sub,type_attr[type])
+          if(type_names[type] == 'circle' || type_names[type] == 'dead' || type_names[type] == 'polygon'){
             ships.push(entity);
-          }else if(type_names[entity.type] == 'dead'){
-            ships.push(entity);
-          }else if(type_names[entity.type] == 'polygon'){
-            ships.push(entity);
-          }else if(type_names[entity.type] == 'bullet'){
+          }else if(type_names[type] == 'bullet'){
             bullets.push(entity);
-          }else if(type_names[entity.type] == 'garbage'){
+          }else if(type_names[type] == 'garbage'){
             garbages.push(entity);
+          }else if(type_names[type] == 'base'){
+            bases.push(entity);
           }else{
             console.log("error");
           }
-          entity.type = type_names[entity.type];
-          entity = {}
-          j = 0;
-        }else{
-          j++;
         }
       }
 
