@@ -170,71 +170,121 @@
       }
       return result;
     }
-
+    var c =0;
     function buildmessage(data){
+      
+
+      //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
+      var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points'];
+      var round_attrs = ['type','id','x','y','radius'];
+      var base_attrs = ['type','id','x','y','radius','energy'];
+
+      var data_types = [ 
+        {
+          name: 'circle',
+          len:10,
+          attrs:ship_attrs,
+        },
+        { 
+          name: 'polygon',
+          len:10,
+          attrs:ship_attrs,
+        },
+        {
+          name: 'dead',
+          len:10,
+          attrs:ship_attrs,
+        },
+        {
+          name:'bullet',
+          len:5,
+          attrs:['type','id','x','y','angle']
+        },
+        {  
+          name: 'sun',
+          len:round_attrs.length,
+          attrs: round_attrs
+        },
+        {   
+          name: 'edge',
+          len:0,
+          attrs:[]
+        },
+        {   
+          name: 'rank',
+          len:31,
+          attrs:[]
+        },
+        {   
+          name: 'base',
+          len: base_attrs.length,
+          attrs: base_attrs
+        }
+      ];
+
       var parseRank = function(r_data){
         var rank = [];
         //console.log(r_data);
-        for(var z=0;z<r_data.length;z+=3){
+        for(var z=1;z<r_data.length;z+=3){
           rank.push({id:r_data[z],name:r_data[z+1],points:r_data[z+2]}); 
         }
+        return rank
       }
 
-      var parseEntity = function(data,attrs){
+      var parseEntity = function(type,data,attrs){
+        //console.log("parseEntity");
+        //console.log(type);
+        //console.log(data);
+        //console.log(attrs);
+        if(data_types[type].name == 'rank')
+          return parseRank(data);
+        
+        var entity = {}
         for(var i in data){
+          if(attrs[i] == 'type'){
+            entity[attrs[i]] = data_types[type].name;  
+            continue;
+          }
+          entity[attrs[i]] = data[i];
         }
+        //console.log(entity);
+        return entity;
       }
 
-      var attrs_ship = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points']
-      var attrs_bullet = ['type','id','x','y','angle']
-      var attrs_garbage = attrs_base = ['type','id','x','y','radius']
-      var attrs_edge = attrs_rank = []
-
-      //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-      var type_len = [10,10,10,5,5,0,31]
-      var type_names = ['circle','polygon','dead','bullet','garbage','edge','rank','base']
-      var type_attr = [ attrs_ship,attrs_ship,attrs_ship,attrs_bullet,
-                        attrs_garbage,attrs_edge,attrs_rank,attrs_base]
-
-      var ships = [];
-      var bullets = [];
-      var garbages = [];
+      var entities = [];
       var rank = null;
       var totalbots = data.shift();
       var totalplayers = data.shift();
-      var player = parseEntity(data.splice(0,10));
+      var type_of_player = data[0];
+      var player = parseEntity(type_of_player,data.splice(0,data_types[type_of_player].len),data_types[type_of_player].attrs);
 
+      var i = 0;
 
-      for(var i=0;i<data.length;i++;){
+      while(i < data.length){
 
         var type = data[i];
-        var sub = data.slice(i+1,i+type_len[entity.type])
-        if(type_names[type] == 'rank'){
-          rank = parseRank(sub);
-        }else{
-          var entity = parseEntity(sub,type_attr[type])
-          if(type_names[type] == 'circle' || type_names[type] == 'dead' || type_names[type] == 'polygon'){
-            ships.push(entity);
-          }else if(type_names[type] == 'bullet'){
-            bullets.push(entity);
-          }else if(type_names[type] == 'garbage'){
-            garbages.push(entity);
-          }else if(type_names[type] == 'base'){
-            bases.push(entity);
-          }else{
-            console.log("error");
-          }
+        var subdata = data.slice(i,i+data_types[type].len)
+        //console.log("subdata:");
+        //console.log(subdata);
+        i+=data_types[type].len;
+        var entity = parseEntity(type,subdata,data_types[type].attrs)
+
+        switch(data_types[type].name) {
+            case 'rank':
+                rank = entity;  
+                break;
+            default:
+              entities.push(entity);
         }
       }
+
 
       gamestate = {}
       if(rank) gamestate.rank = rank;
       gamestate.player = player;
-      gamestate.ships = ships;
-      gamestate.bullets = bullets;
-      gamestate.garbages = garbages;
+      gamestate.entities = entities;
       gamestate.totalbots = totalbots;
-      gamestate.totalplayers = totalplayers;
+      gamestate.totalplayers = totalplayers; 
       return gamestate;
     }
 
@@ -332,8 +382,10 @@
           objectRender = new PolygonShipRender(stage);
         } else if(update.type == "bullet"){
           objectRender = new BulletRender(stage);
-        }else if(update.type == "garbage"){
-          objectRender = new GarbageRender(stage);
+        }else if(update.type == "sun"){
+          objectRender = new SunRender(stage);
+        }else if(update.type == "base"){
+          objectRender = new BaseRender(stage);
         }
 
         if(!this.objectsOnStage[update.id]){
@@ -360,37 +412,80 @@
         if(this.objectsOnStage[index].energybar)
           stage.removeChild(this.objectsOnStage[index].energybar)
 
+        if(this.objectsOnStage[index].body)
+          stage.removeChild(this.objectsOnStage[index].body)
+
         delete this.objectsOnStage[index];
 
       }
     }
 
+    var BaseRender = function(stage){
+      this.stage = stage;
+    }
 
-    var GarbageRender = function(stage){
+    BaseRender.prototype.createEntity = function(base,coordenate){
+        var entity = {};
+        
+        entity.body = new PIXI.Graphics();
+        //entity.body.beginFill(0xffd900);
+        entity.body.lineStyle(2, 0xffd900, 1);
+        entity.body.drawCircle(0,0,base.radius * coordenate.scale);
+        entity.body.endFill();
+        this.stage.addChild(entity.body);
+
+
+        entity.energybar = new PIXI.Graphics();
+        entity.energybar.beginFill(0xffd900);
+        entity.energybar.drawRect(0,0,10,5);
+        entity.energybar.endFill();
+
+        this.stage.addChild(entity.energybar);
+        this.stage.addChild(entity.body);
+        return entity;
+    }
+
+    BaseRender.prototype.update = function(entity,base,coordenate,radarCoordenate){
+
+      
+      entity.body.position.x = coordenate.X(Number(base.x));
+      entity.body.position.y = coordenate.Y(Number(base.y)) ;
+
+      entity.energybar.position.x  = entity.body.position.x - entity.energybar.width * 0.5;
+      entity.energybar.position.y  = entity.body.position.y ;
+      
+      if(entity.energybar.width != base.energy){
+        entity.energybar.width = base.energy/100 * 300 ;
+      }
+      
+    }
+
+
+    var SunRender = function(stage){
       this.stage = stage;
       this.texture = PIXI.Texture.fromImage('particle.png')
       
     }
 
-    GarbageRender.prototype.createEntity = function(garbage,coordenate){
+    SunRender.prototype.createEntity = function(sun,coordenate){
         var entity = {};
 
         var sprite = new PIXI.Sprite(this.texture) ;      
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
-        sprite.width = sprite.height = garbage.angle * 3 *  2 * coordenate.scale;
+        sprite.width = sprite.height = sun.radius * 3 *  2 * coordenate.scale;
 
         entity.sprite = sprite;
         this.stage.addChild(entity.sprite);
         return entity;
     }
 
-    GarbageRender.prototype.update = function(entity,garbage,coordenate,radarCoordenate){
+    SunRender.prototype.update = function(entity,sun,coordenate,radarCoordenate){
       var sprite = entity.sprite;
       sprite.tint = 0xd9db1c;
-      sprite.position.x = coordenate.X(Number(garbage.x));
-      sprite.position.y = coordenate.Y(Number(garbage.y)) ;
-      sprite.rotation = -Number(garbage.angle)+ Math.PI/2;
+      sprite.position.x = coordenate.X(Number(sun.x));
+      sprite.position.y = coordenate.Y(Number(sun.y)) ;
+      //sprite.rotation = -Number(sun.angle)+ Math.PI/2;
     }
 
     var BulletRender = function(stage){
@@ -548,7 +643,6 @@
           var name = ship.points +" points "+ (ship.name ? " " + ship.name : "") 
 
           if(name != entity.name.text){
-            console.log("name change")
             entity.name.text = name;
           }
         }
@@ -663,10 +757,10 @@
       
         if(gamestate){
           if(gamestate.rank){
-            console.log(gamestate.rank);
+
             var html = ""
             for(i in gamestate.rank){
-              console.log(("<li>" +(gamestate.rank[i].name ? gamestate.rank[i].name : "no name") + "</li>" ))
+
               if(gamestate.rank[i].name != "0"){
                 html+= ("<li>" +(gamestate.rank[i].name ? gamestate.rank[i].name : "no name") + "</li>" )
               }
@@ -693,7 +787,7 @@
             //var status = document.getElementById('status');
             //status.innerHTML = gamestate.totalbots + ' bots ' + gamestate.totalplayers + (gamestate.totalplayers > 1 ? ' players '  : ' player');
 
-            gamestate.ships.push(gamestate.player);
+            gamestate.entities.push(gamestate.player);
           }else{
             //var lifebar = document.getElementById('progress');
             //lifebar.style.width = '0%';
@@ -715,8 +809,7 @@
           this.edges.position.y = this.coordenate.Y(this.gamewidth).toFixed(0);          
           
 
-          //console.log(gamestate.trash);
-          var entities = gamestate.ships.concat(gamestate.bullets).concat(gamestate.garbages);
+          var entities = gamestate.entities;
           
           // drawing entities
           for (var i = 0; i < entities.length; i++) {
