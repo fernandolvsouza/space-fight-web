@@ -175,35 +175,35 @@
       
 
       //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-      var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points'];
-      var round_attrs = ['type','id','x','y','radius'];
+      var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points','group'];
+      var star_attrs = ['type','id','x','y','radius','range','group'];
       var base_attrs = ['type','id','x','y','radius','energy'];
 
       var data_types = [ 
         {
           name: 'circle',
-          len:10,
+          len:11,
           attrs:ship_attrs,
         },
         { 
           name: 'polygon',
-          len:10,
+          len:11,
           attrs:ship_attrs,
         },
         {
           name: 'dead',
-          len:10,
+          len:11,
           attrs:ship_attrs,
         },
         {
           name:'bullet',
-          len:5,
-          attrs:['type','id','x','y','angle']
+          len:6,
+          attrs:['type','id','x','y','angle','color']
         },
         {  
           name: 'sun',
-          len:round_attrs.length,
-          attrs: round_attrs
+          len:star_attrs.length ,
+          attrs: star_attrs
         },
         {   
           name: 'edge',
@@ -219,6 +219,11 @@
           name: 'base',
           len: base_attrs.length,
           attrs: base_attrs
+        },
+        {   
+          name: 'star_capture_bullet',
+          len:6,
+          attrs:['type','id','x','y','angle','color']
         }
       ];
 
@@ -380,7 +385,7 @@
           objectRender = new CircleShipRender(stage);
         }else if(update.type == "polygon"){
           objectRender = new PolygonShipRender(stage);
-        } else if(update.type == "bullet"){
+        } else if(update.type == "bullet" || update.type == "star_capture_bullet"){
           objectRender = new BulletRender(stage);
         }else if(update.type == "sun"){
           objectRender = new SunRender(stage);
@@ -414,6 +419,9 @@
 
         if(this.objectsOnStage[index].body)
           stage.removeChild(this.objectsOnStage[index].body)
+
+        if(this.objectsOnStage[index].territory)
+          stage.removeChild(this.objectsOnStage[index].territory)
 
         delete this.objectsOnStage[index];
 
@@ -469,23 +477,49 @@
 
     SunRender.prototype.createEntity = function(sun,coordenate){
         var entity = {};
+        this.basicCreate(entity,sun,coordenate);
+        
+        this.stage.addChild(entity.body);
+        this.stage.addChild(entity.territory);
 
-        var sprite = new PIXI.Sprite(this.texture) ;      
-        sprite.anchor.x = 0.5;
-        sprite.anchor.y = 0.5;
-        sprite.width = sprite.height = sun.radius * 3 *  2 * coordenate.scale;
-
-        entity.sprite = sprite;
-        this.stage.addChild(entity.sprite);
         return entity;
+    }
+    SunRender.prototype.basicCreate = function(entity,sun,coordenate){
+
+        entity.body = new PIXI.Graphics();
+        entity.body.beginFill(sun.group,0.7);
+        entity.body.lineStyle(2, sun.group, 1);
+        entity.body.drawCircle(0,0,sun.radius * coordenate.scale);
+        entity.body.endFill();
+
+        entity.territory = new PIXI.Graphics();
+        entity.territory.beginFill(sun.group,0.2);
+        entity.territory.drawCircle(0,0,sun.range * coordenate.scale);
+        entity.territory.endFill();
+    }
+
+    SunRender.prototype.changeSunGroup = function(entity,sun,coordenate){
+      this.stage.removeChild(entity.territory);
+      this.stage.removeChild(entity.body);
+
+      this.basicCreate(entity,sun,coordenate);
+        
+      this.stage.addChild(entity.body);
+      this.stage.addChild(entity.territory);
     }
 
     SunRender.prototype.update = function(entity,sun,coordenate,radarCoordenate){
-      var sprite = entity.sprite;
-      sprite.tint = 0xd9db1c;
-      sprite.position.x = coordenate.X(Number(sun.x));
-      sprite.position.y = coordenate.Y(Number(sun.y)) ;
-      //sprite.rotation = -Number(sun.angle)+ Math.PI/2;
+      if(entity.group != sun.group){
+        this.changeSunGroup(entity,sun,coordenate);
+      }
+      
+      var body = entity.body;
+      var territory = entity.territory;
+      body.position.x = coordenate.X(Number(sun.x));
+      body.position.y = coordenate.Y(Number(sun.y)) ;
+      territory.position.x = body.position.x;
+      territory.position.y = body.position.y; 
+      entity.group = sun.group;
     }
 
     var BulletRender = function(stage){
@@ -508,11 +542,11 @@
             },
             "scale": {
               "start": 0.25,
-              "end": 0.75
+              "end": (bullet.type == "star_capture_bullet" ? 5.0 : 0.75)
             },
             "color": {
-              "start": "#7ed995",
-              "end": "#6bba2f"
+              "start": bullet.color,
+              "end": bullet.color 
             },
             "speed": {
               "start": 500,
@@ -596,7 +630,7 @@
         var entity = {};
 
         var sprite = new PIXI.Sprite(PIXI.Texture.fromImage('no-color3.png')) ;
-        sprite.tint = ship.isbot ? this.tints.bot : this.tints.normal;
+        sprite.tint = ship.isbot ? this.tints.bot : ship.group;
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
         sprite.width = sprite.height = 4 * coordenate.scale;
@@ -652,7 +686,7 @@
         }
         
         if(sprite.tint == this.tints.damage && !ship.isdamaged){  
-          sprite.tint = ship.isbot ? this.tints.bot : this.tints.normal;
+          sprite.tint = ship.isbot ? this.tints.bot : ship.group;
         }     
 
         this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
@@ -848,7 +882,7 @@
     
       this.ws = ws;
       this.kd = kd;
-      this.EVENTS = ['LEFT', 'RIGHT', 'UP', 'DOWN', 'FIRE', 'MOUSE_MOVE', 'NEW_PLAYER', 'REMOVE_PLAYER', 'BE_BORN', 'DIE'];
+      this.EVENTS = ['LEFT', 'RIGHT', 'UP', 'DOWN', 'FIRE', 'TRY_CAPTURE_STAR','MOUSE_MOVE', 'NEW_PLAYER', 'REMOVE_PLAYER', 'BE_BORN', 'DIE'];
 
       this.sendEvent = function (type,payload){
         var array = [this.EVENTS.indexOf(type)]
@@ -895,7 +929,7 @@
           _this.sendEvent("RIGHT",{pressed: true});
         });
         this.kd.SPACE.down(function () {
-          _this.sendEvent("FIRE",{pressed: true});
+          _this.sendEvent("TRY_CAPTURE_STAR",{pressed: true});
         });
 
         //release key 
@@ -912,7 +946,7 @@
           _this.sendEvent("RIGHT",{pressed: false});
         });
         this.kd.SPACE.up(function () {
-          _this.sendEvent("FIRE",{pressed: false});
+          _this.sendEvent("TRY_CAPTURE_STAR",{pressed: false});
         });
       }
 

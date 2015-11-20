@@ -2,7 +2,7 @@
 * Streaming game to client  needs iserver
 */
 var lz = require('lz-string');
-var EVENTS = ['LEFT', 'RIGHT', 'UP', 'DOWN', 'FIRE', 'MOUSE_MOVE', 'NEW_PLAYER', 'REMOVE_PLAYER', 'BE_BORN', 'DIE'];
+var EVENTS = ['LEFT', 'RIGHT', 'UP', 'DOWN', 'FIRE', 'TRY_CAPTURE_STAR','MOUSE_MOVE', 'NEW_PLAYER', 'REMOVE_PLAYER', 'BE_BORN', 'DIE'];
 
 module.exports.createServer = function(server,iserver) {
 	var seq_socket = 0;
