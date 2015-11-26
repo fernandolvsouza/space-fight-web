@@ -175,24 +175,24 @@
       
 
       //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-      var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points','group'];
+      var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points','group','power'];
       var star_attrs = ['type','id','x','y','radius','range','group'];
       var base_attrs = ['type','id','x','y','radius','energy'];
 
       var data_types = [ 
         {
           name: 'circle',
-          len:11,
+          len:12,
           attrs:ship_attrs,
         },
         { 
           name: 'polygon',
-          len:11,
+          len:12,
           attrs:ship_attrs,
         },
         {
           name: 'dead',
-          len:11,
+          len:12,
           attrs:ship_attrs,
         },
         {
@@ -471,7 +471,7 @@
 
     var SunRender = function(stage){
       this.stage = stage;
-      this.texture = PIXI.Texture.fromImage('particle.png')
+      this.texture = PIXI.Texture.fromImage('nicestar.png')
       
     }
 
@@ -479,46 +479,63 @@
         var entity = {};
         this.basicCreate(entity,sun,coordenate);
         
-        this.stage.addChild(entity.body);
+        //this.stage.addChild(entity.body);
+        this.stage.addChild(entity.sprite);
         this.stage.addChild(entity.territory);
 
         return entity;
     }
     SunRender.prototype.basicCreate = function(entity,sun,coordenate){
 
-        entity.body = new PIXI.Graphics();
+        /*entity.body = new PIXI.Graphics();
         entity.body.beginFill(sun.group,0.7);
         entity.body.lineStyle(2, sun.group, 1);
         entity.body.drawCircle(0,0,sun.radius * coordenate.scale);
-        entity.body.endFill();
+        entity.body.endFill();*/
+
+        entity.sprite = new PIXI.Sprite(this.texture);
+        //entity.sprite.tint = sun.group;
+        entity.sprite.anchor.x = 0.5;
+        entity.sprite.anchor.y = 0.5;
+        entity.sprite.width = entity.sprite.height = 2 * sun.radius * coordenate.scale * 1.8; //glow
 
         entity.territory = new PIXI.Graphics();
         entity.territory.beginFill(sun.group,0.2);
         entity.territory.drawCircle(0,0,sun.range * coordenate.scale);
         entity.territory.endFill();
+        entity.group = sun.group;
+
     }
 
     SunRender.prototype.changeSunGroup = function(entity,sun,coordenate){
       this.stage.removeChild(entity.territory);
-      this.stage.removeChild(entity.body);
+      //this.stage.removeChild(entity.body);
+      this.stage.removeChild(entity.sprite);
 
       this.basicCreate(entity,sun,coordenate);
         
-      this.stage.addChild(entity.body);
+      //this.stage.addChild(entity.body);
       this.stage.addChild(entity.territory);
+      this.stage.addChild(entity.sprite);
     }
 
     SunRender.prototype.update = function(entity,sun,coordenate,radarCoordenate){
       if(entity.group != sun.group){
         this.changeSunGroup(entity,sun,coordenate);
+        //console.log(entity.group);
+        //  console.log(sun.group);
       }
       
-      var body = entity.body;
+      //var body = entity.body;
       var territory = entity.territory;
-      body.position.x = coordenate.X(Number(sun.x));
-      body.position.y = coordenate.Y(Number(sun.y)) ;
-      territory.position.x = body.position.x;
-      territory.position.y = body.position.y; 
+      var sprite = entity.sprite;
+      //console.log(sprite);
+      //body.position.x = coordenate.X(Number(sun.x));
+      //body.position.y = coordenate.Y(Number(sun.y)) ;
+      territory.position.x = coordenate.X(Number(sun.x));
+      territory.position.y = coordenate.Y(Number(sun.y)); 
+      sprite.position.x = territory.position.x;
+      sprite.position.y = territory.position.y; 
       entity.group = sun.group;
     }
 
@@ -630,7 +647,7 @@
         var entity = {};
 
         var sprite = new PIXI.Sprite(PIXI.Texture.fromImage('no-color3.png')) ;
-        sprite.tint = ship.isbot ? this.tints.bot : ship.group;
+        sprite.tint = ship.group;
         sprite.anchor.x = 0.5;
         sprite.anchor.y = 0.5;
         sprite.width = sprite.height = 4 * coordenate.scale;
@@ -686,7 +703,7 @@
         }
         
         if(sprite.tint == this.tints.damage && !ship.isdamaged){  
-          sprite.tint = ship.isbot ? this.tints.bot : ship.group;
+          sprite.tint = ship.group;
         }     
 
         this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
@@ -815,16 +832,10 @@
             this.coordenate.refpoint = this.player;
             this.radarCoordenate.refpoint = this.player;
             
-            //var lifebar = document.getElementById('progress');
-            //lifebar.style.width = this.player.energy + '%';
-
-            //var status = document.getElementById('status');
-            //status.innerHTML = gamestate.totalbots + ' bots ' + gamestate.totalplayers + (gamestate.totalplayers > 1 ? ' players '  : ' player');
 
             gamestate.entities.push(gamestate.player);
           }else{
-            //var lifebar = document.getElementById('progress');
-            //lifebar.style.width = '0%';
+            
             if( $('#myModal').css('display') == 'none'){
               $('#myModal').modal('show');
             }
