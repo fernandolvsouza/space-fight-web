@@ -9,7 +9,7 @@ module.exports.start = function(app) {
 
 	var oserver = new require("./ostream.js").createServer(wsserver)
 
-	var port = 5000
+	var port = 80
 	console.log("websocket => port %d", port)
 	server.listen(port)
 
