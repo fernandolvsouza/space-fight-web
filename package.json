@@ -4,7 +4,9 @@
   "dependencies": {
     "express": "^4.4.5",
     "ws": "0.4.x",
-    "lz-string": "x.x.x"
+    "lz-string": "x.x.x",
+    "compression": "x.x.x",
+    "serve-static": "x.x.x"
   },
   "engines": {
     "node": "0.10.x"

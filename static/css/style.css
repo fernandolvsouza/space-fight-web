@@ -1,0 +1,110 @@
+body {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background-color: black !important;
+  display: block;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.radar{
+width:300px;
+height:200px;
+position: absolute;
+top:20px;
+right:20px;
+background-color: transparent;
+border: 1px solid;
+border-color: #006600;
+overflow: hidden;
+}
+
+ul.rank{
+list-style-type: decimal;
+width:200px;
+min-height: 20px;
+position: absolute;
+top:20px;
+left:3px;
+background-color: transparent;
+border: 2px solid;
+border-color: #006600;
+-webkit-border-radius: 6px;
+-moz-border-radius: 6px;
+border-radius: 6px;
+overflow: hidden;
+}
+
+ul.rank > li {
+
+height:30px;
+font-size: 20px;
+font-weight: bold;
+color: green;
+}
+ul.rank > li > span{
+float:right;
+}
+
+.lifebar{
+width:300px;
+height:20px;
+position: absolute;
+top:20px;
+left:40px;
+background-color: transparent;
+border: 1px solid;
+border-color: #006600;
+}
+
+.lifebar > div{
+ background-color: green;
+ width: 100%;
+ height: 18px;
+}
+
+.status{
+font-size: 20px;
+position: absolute;
+top:17px;
+left:360px;
+vertical-align: top;
+background-color: transparent;
+color: green;
+}
+
+.circle {
+border-radius: 50%;
+width: 5px;
+height: 5px;
+position:absolute;
+background-color: red;
+}
+
+.front {
+z-index:1000;
+}
+
+.modal-dialog {
+width:300px !important;
+}
+
+.mousepointer{
+width: 60px;
+}
+
+.mouseclick{
+width: 80px;
+}
+
+.howto{
+text-align: center;
+}
+
+.spacebar{
+width: 100px;
+}
+.modal-backdrop{
+	z-index:0;
+}
