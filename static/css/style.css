@@ -15,11 +15,17 @@ position: absolute;
 top:20px;
 right:20px;
 background-color: transparent;
-border: 1px solid;
+border: 2px solid;
 border-color: #006600;
 overflow: hidden;
+-webkit-border-radius: 6px;
+-moz-border-radius: 6px;
+border-radius: 6px;
 }
 
+.rankheader{
+
+}
 ul.rank{
 list-style-type: decimal;
 width:200px;

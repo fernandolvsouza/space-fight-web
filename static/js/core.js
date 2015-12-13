@@ -52,6 +52,11 @@ function buildmessage(data){
       name: 'star_capture_bullet',
       len:6,
       attrs:['type','id','x','y','angle','color']
+    },
+    {   
+      name: 'chase_bullet',
+      len:6,
+      attrs:['type','id','x','y','angle','color']
     }
   ];
 
@@ -181,7 +186,8 @@ GameRenderer.prototype.addToStage = function(update,coordenate,radarCoordenate,p
       objectRender = this.circleShipRender;
     }else if(update.type == "polygon"){
       objectRender = this.polygonShipRender;
-    } else if(update.type == "bullet" || update.type == "star_capture_bullet"){
+    } else if(update.type == "bullet" || update.type == "star_capture_bullet" || update.type == "chase_bullet"){
+      console.log(update.type);
       objectRender = this.bulletRender;
     }else if(update.type == "sun"){
       objectRender = this.sunRender;
@@ -343,22 +349,18 @@ var BulletRender = function(stage){
 
 BulletRender.prototype.createEntity = function(bullet,coordenate){
     var entity = {}
-    var container = new PIXI.Container();
-    entity.emitter = new cloudkid.Emitter(
-      container,
-      this.textures.particle,
-      {
+    var emitter = {
         "alpha": {
           "start": 0.62,
           "end": 0
         },
         "scale": {
-          "start": 0.25,
-          "end": (bullet.type == "star_capture_bullet" ? 5.0 : 0.75)
+          "start": 0.75,
+          "end": 0.25
         },
         "color": {
-          "start": bullet.color,
-          "end": bullet.color 
+          "start": "#444444",
+          "end": "#444444"
         },
         "speed": {
           "start": 500,
@@ -392,6 +394,23 @@ BulletRender.prototype.createEntity = function(bullet,coordenate){
           "r": 0
         }
       }
+
+    var container = new PIXI.Container();
+
+    if(bullet.type == "star_capture_bullet"){
+      emitter.scale.end = 5.0;
+    }
+
+    if(bullet.type == "chase_bullet"){
+      emitter.lifetime.max = 0.3;
+      emitter.speed.start = 0;
+      emitter.speed.end = 0;
+    }
+    emitter.color.end = emitter.color.start = bullet.color;
+    entity.emitter = new cloudkid.Emitter(
+      container,
+      this.textures.particle,
+      emitter
     );
     entity.emitter.emit = true;
     entity.sprite = container;
