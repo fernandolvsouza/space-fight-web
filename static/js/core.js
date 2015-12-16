@@ -1,7 +1,11 @@
+
+var CONSTANTS =  {
+  colorHex : ['0xFFFF00','0xFF0000','0x008000','0x0000FF','0x00FFFF','0xffffff','0xFFC0CB','0xFFA500'],
+  colorGroup : ['yellow','red','green','blue','cyan','white','pink','orange']
+}
 //parse websocket message
 function buildmessage(data){
   
-
   //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
   var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points','group','power'];
   var star_attrs = ['type','id','x','y','radius','range','group'];
@@ -26,7 +30,7 @@ function buildmessage(data){
     {
       name:'bullet',
       len:6,
-      attrs:['type','id','x','y','angle','color']
+      attrs:['type','id','x','y','angle','group']
     },
     {  
       name: 'sun',
@@ -51,12 +55,17 @@ function buildmessage(data){
     {   
       name: 'star_capture_bullet',
       len:6,
-      attrs:['type','id','x','y','angle','color']
+      attrs:['type','id','x','y','angle','group']
     },
     {   
       name: 'chase_bullet',
       len:6,
-      attrs:['type','id','x','y','angle','color']
+      attrs:['type','id','x','y','angle','group']
+    },
+    {   
+      name: 'groups',
+      len:10,
+      attrs:[]
     }
   ];
 
@@ -69,6 +78,16 @@ function buildmessage(data){
     return rank
   }
 
+  var parseGroup = function(r_data){
+    var groups = [];
+    //console.log(r_data);
+    var totalstars = r_data[1];
+    for(var z=2;z<r_data.length;z+=2){
+      groups.push({name: CONSTANTS.colorGroup[r_data[z]],group:CONSTANTS.colorHex[r_data[z]],stars:r_data[z+1]}); 
+    }
+    return {totalstars: totalstars, groups : groups};
+  }
+
   var parseEntity = function(type,data,attrs){
     //console.log("parseEntity");
     //console.log(type);
@@ -76,11 +95,18 @@ function buildmessage(data){
     //console.log(attrs);
     if(data_types[type].name == 'rank')
       return parseRank(data);
+
+    if(data_types[type].name == 'groups')
+      return parseGroup(data);
     
     var entity = {}
     for(var i in data){
       if(attrs[i] == 'type'){
         entity[attrs[i]] = data_types[type].name;  
+        continue;
+      }
+      if(attrs[i] == 'group'){
+        entity[attrs[i]] = CONSTANTS.colorHex[data[i]] ? CONSTANTS.colorHex[data[i]] : "white";  
         continue;
       }
       entity[attrs[i]] = data[i];
@@ -90,7 +116,7 @@ function buildmessage(data){
   }
 
   var entities = [];
-  var rank = null;
+  var rank,groups,totalstars = null;
   var totalbots = data.shift();
   var totalplayers = data.shift();
   var type_of_player = data[0];
@@ -111,6 +137,10 @@ function buildmessage(data){
         case 'rank':
             rank = entity;  
             break;
+        case 'groups':
+            groups = entity.groups;  
+            totalstars = entity.totalstars;
+            break;
         default:
           entities.push(entity);
     }
@@ -119,6 +149,8 @@ function buildmessage(data){
 
   gamestate = {}
   if(rank) gamestate.rank = rank;
+  if(groups) gamestate.groups = groups;
+  if(totalstars) gamestate.totalstars = totalstars;
   gamestate.player = player;
   gamestate.entities = entities;
   gamestate.totalbots = totalbots;
@@ -187,7 +219,6 @@ GameRenderer.prototype.addToStage = function(update,coordenate,radarCoordenate,p
     }else if(update.type == "polygon"){
       objectRender = this.polygonShipRender;
     } else if(update.type == "bullet" || update.type == "star_capture_bullet" || update.type == "chase_bullet"){
-      console.log(update.type);
       objectRender = this.bulletRender;
     }else if(update.type == "sun"){
       objectRender = this.sunRender;
@@ -406,7 +437,7 @@ BulletRender.prototype.createEntity = function(bullet,coordenate){
       emitter.speed.start = 0;
       emitter.speed.end = 0;
     }
-    emitter.color.end = emitter.color.start = bullet.color;
+    emitter.color.end = emitter.color.start = bullet.group;
     entity.emitter = new cloudkid.Emitter(
       container,
       this.textures.particle,
@@ -620,16 +651,25 @@ Game.prototype.update = function(gamestate) {
   
     if(gamestate){
       if(gamestate.rank){
-
         var html = ""
         for(i in gamestate.rank){
-
           if(gamestate.rank[i].name != "0"){
-            html+= ("<li>" +(gamestate.rank[i].name ? gamestate.rank[i].name : "no name") + "</li>" )
+            html+= ("<li>" +(gamestate.rank[i].name ? gamestate.rank[i].name : "anonymous") + "</li>" )
           }
         }
-        //q console.log($('#rank'));
-        $('#rank').html(html);
+        $('#rank ul').html(html);
+      }
+
+      if(gamestate.groups){
+        console.log(gamestate.totalstars)
+        for(i in gamestate.groups){
+          var elem = $('#'+gamestate.groups[i].name + ' .number');
+          
+          var html = gamestate.groups[i].stars + ' stars';
+          if(elem && elem.html() !== html){
+            elem.html(gamestate.groups[i].stars + ' stars');
+          }
+        }
       }
 
       if(gamestate.player && gamestate.player.type != "dead"){
