@@ -470,7 +470,6 @@ var BasicShipRender = function(){}
 BasicShipRender.prototype.createRadarPoint = function(entity){
   var radarpoint = document.createElement("div");
   radarpoint.className = 'circle';
-  console.log(entity.group);
   radarpoint.style.background = entity.group.hex.replace("0x","#");
   document.getElementById('radar').appendChild(radarpoint);
   return radarpoint;
@@ -673,20 +672,16 @@ Game.prototype.update = function(gamestate) {
           var html = gamestate.groups[i].stars + ' stars';
           if(number && number.html() !== html){
             number.html(gamestate.groups[i].stars + ' stars');
-            console.log(gamestate.groups[i].stars/gamestate.totalstars  );
             bar.css("height",Number((gamestate.groups[i].stars/gamestate.totalstars) *  100 ).toFixed(0)+ "%");
           }
         }
-      }
-
-      if(gamestate.player){
-        $('body').addClass(gamestate.player.group.name);
       }
 
       if(gamestate.player && gamestate.player.type != "dead"){
         if(!this.player){
           if(this.onNewPlayer){
             this.onNewPlayer(this.player);
+            $('body').addClass(gamestate.player.group.name);
           }
         }
         
@@ -698,7 +693,6 @@ Game.prototype.update = function(gamestate) {
         gamestate.entities.push(gamestate.player);
         
         $('body.' + gamestate.player.group.name + ' .meter span').css('width', parseFloat(gamestate.player.cannon_percentage) + '%');
-        console.log($('.meter.' + gamestate.player.group.name));
         
       }else{
         
