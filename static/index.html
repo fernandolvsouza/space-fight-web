@@ -1,9 +1,10 @@
 <html>
   <head>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
   </head>
-  <body>
+  <body >
   <div id="container">
   <div id="myModal" class="modal fade front">
     <div class="modal-dialog">
@@ -36,28 +37,34 @@
     <ul></ul>
   </div>
   <div id="radar" class="radar"></div>
-    <div id="grouprank" class="grouprank">
-      <div id="red" class="bar"><div class="bar-inside red"></div><div class="number">0 stars</div></div>
-      <div id="green" class="bar"><div class="bar-inside green"></div><div class="number">0 stars</div></div>
-      <div id="blue" class="bar"><div class="bar-inside blue"></div><div class="number">0 stars</div></div>
-      <div id="yellow" class="bar"><div class="bar-inside yellow"></div><div class="number">0 stars</div></div>
+  <div id="grouprank" class="grouprank">
+    <div id="red" class="bar"><div class="bar-inside red"></div><div class="number">0 stars</div></div>
+    <div id="green" class="bar"><div class="bar-inside green"></div><div class="number">0 stars</div></div>
+    <div id="blue" class="bar"><div class="bar-inside blue"></div><div class="number">0 stars</div></div>
+    <div id="yellow" class="bar"><div class="bar-inside yellow"></div><div class="number">0 stars</div></div>
   </div>
 
-<!--script src="static/js/fpsmeter.min.js"></script>
+<div class="meter">
+  <span style="width: 100%"></span>
+</div>
+
+<script src="static/js/fpsmeter.min.js"></script>
 <script src=" static/js/keydrown.min.js"></script>
 <script src="bower_components/jquery/dist/jquery.min.js"></script>
 <script src="static/js/bootstrap.min.js"></script>
 <script src="bower_components/pixi.js/bin/pixi.min.js"></script>
 <script src="bower_components/pixi-particles/dist/pixi-particles.min.js"></script>
 <script src="node_modules/lz-string/libs/lz-string.js"></script>
-<script src="static/js/core.js"></script-->
+<script src="static/js/core.js"></script>
 
-  <script src="js/script.min.js"></script>
+  <!--script src="js/script.min.js"></script-->
   <script>
    $('#myModal').modal({
       backdrop: 'static',
       keyboard: true
     });
+
+    
   </script>
   
   </body>

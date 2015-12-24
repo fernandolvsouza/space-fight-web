@@ -7,24 +7,24 @@ var CONSTANTS =  {
 function buildmessage(data){
   
   //CIRCLE, POLYGON, DEAD, BULLET, GARBAGE
-  var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points','group','power'];
+  var ship_attrs = ['type','id','x','y','angle','energy','isbot','isdamaged','name','points','group','power','cannon_percentage'];
   var star_attrs = ['type','id','x','y','radius','range','group'];
   var base_attrs = ['type','id','x','y','radius','energy'];
 
   var data_types = [ 
     {
       name: 'circle',
-      len:12,
+      len:13,
       attrs:ship_attrs
     },
     { 
       name: 'polygon',
-      len:12,
+      len:13,
       attrs:ship_attrs
     },
     {
       name: 'dead',
-      len:12,
+      len:13,
       attrs:ship_attrs
     },
     {
@@ -106,7 +106,7 @@ function buildmessage(data){
         continue;
       }
       if(attrs[i] == 'group'){
-        entity[attrs[i]] = CONSTANTS.colorHex[data[i]] ? CONSTANTS.colorHex[data[i]] : "white";  
+        entity[attrs[i]] = { name: CONSTANTS.colorGroup[data[i]], hex : CONSTANTS.colorHex[data[i]]};  
         continue;
       }
       entity[attrs[i]] = data[i];
@@ -256,6 +256,9 @@ GameRenderer.prototype.removeFromStage = function(index){
 	if(this.objectsOnStage[index].territory)
 	  this.stage.removeChild(this.objectsOnStage[index].territory)
 
+  if(this.objectsOnStage[index].emitter)
+    this.objectsOnStage[index].emitter = null;
+
 	delete this.objectsOnStage[index];
 
 }
@@ -332,7 +335,7 @@ SunRender.prototype.basicCreate = function(entity,sun,coordenate){
     entity.sprite.width = entity.sprite.height = 2 * sun.radius * coordenate.scale * 1.8; //glow
 
     entity.territory = new PIXI.Graphics();
-    entity.territory.beginFill(sun.group,0.2);
+    entity.territory.beginFill(sun.group.hex,0.2);
     entity.territory.drawCircle(0,0,sun.range * coordenate.scale);
     entity.territory.endFill();
     entity.group = sun.group;
@@ -352,7 +355,7 @@ SunRender.prototype.changeSunGroup = function(entity,sun,coordenate){
 }
 
 SunRender.prototype.update = function(entity,sun,coordenate,radarCoordenate){
-  if(entity.group != sun.group){
+  if(entity.group.name != sun.group.name){
     this.changeSunGroup(entity,sun,coordenate);
     //console.log(entity.group);
     //  console.log(sun.group);
@@ -437,7 +440,7 @@ BulletRender.prototype.createEntity = function(bullet,coordenate){
       emitter.speed.start = 0;
       emitter.speed.end = 0;
     }
-    emitter.color.end = emitter.color.start = bullet.group;
+    emitter.color.end = emitter.color.start = bullet.group.hex;
     entity.emitter = new cloudkid.Emitter(
       container,
       this.textures.particle,
@@ -464,9 +467,11 @@ BulletRender.prototype.update = function(entity,bullet,coordenate,radarCoordenat
 
 var BasicShipRender = function(){}
 
-BasicShipRender.prototype.createRadarPoint = function(){
+BasicShipRender.prototype.createRadarPoint = function(entity){
   var radarpoint = document.createElement("div");
   radarpoint.className = 'circle';
+  console.log(entity.group);
+  radarpoint.style.background = entity.group.hex.replace("0x","#");
   document.getElementById('radar').appendChild(radarpoint);
   return radarpoint;
 }
@@ -483,7 +488,7 @@ var CircleShipRender = function(stage){
     bot: 0x00b300,
     damage: 0xe18410,
     normal: 0x000099
-  }
+  }  
 }
 
 CircleShipRender.prototype = new BasicShipRender();
@@ -492,13 +497,13 @@ CircleShipRender.prototype.createEntity = function(ship,coordenate){
     var entity = {};
 
     var sprite = new PIXI.Sprite(PIXI.Texture.fromImage('no-color3.png')) ;
-    sprite.tint = ship.group;
+    sprite.tint = ship.group.hex;
     sprite.anchor.x = 0.5;
     sprite.anchor.y = 0.5;
     sprite.width = sprite.height = 4 * coordenate.scale;
 
     entity.sprite = sprite;
-    entity.radarpoint = this.createRadarPoint();
+    entity.radarpoint = this.createRadarPoint(ship);
     this.stage.addChild(entity.sprite);
 
     if(!ship.isbot){
@@ -548,7 +553,7 @@ CircleShipRender.prototype.update = function(entity,ship,coordenate,radarCoorden
     }
     
     if(sprite.tint == this.tints.damage && !ship.isdamaged){  
-      sprite.tint = ship.group;
+      sprite.tint = ship.group.hex;
     }     
 
     this.setPositionInRadar(entity.radarpoint,ship,radarCoordenate);
@@ -571,7 +576,7 @@ PolygonShipRender.prototype.createEntity = function(ship,coordenate){
   sprite.width = sprite.height = 4 * coordenate.scale; 
 
   entity.sprite = sprite;
-  entity.radarpoint = this.createRadarPoint();
+  entity.radarpoint = this.createRadarPoint(ship);
 
   return entity;
 }
@@ -661,15 +666,21 @@ Game.prototype.update = function(gamestate) {
       }
 
       if(gamestate.groups){
-        console.log(gamestate.totalstars)
         for(i in gamestate.groups){
-          var elem = $('#'+gamestate.groups[i].name + ' .number');
+          var number = $('#'+gamestate.groups[i].name + ' .number');
+          var bar = $('#'+gamestate.groups[i].name + ' .bar-inside');
           
           var html = gamestate.groups[i].stars + ' stars';
-          if(elem && elem.html() !== html){
-            elem.html(gamestate.groups[i].stars + ' stars');
+          if(number && number.html() !== html){
+            number.html(gamestate.groups[i].stars + ' stars');
+            console.log(gamestate.groups[i].stars/gamestate.totalstars  );
+            bar.css("height",Number((gamestate.groups[i].stars/gamestate.totalstars) *  100 ).toFixed(0)+ "%");
           }
         }
+      }
+
+      if(gamestate.player){
+        $('body').addClass(gamestate.player.group.name);
       }
 
       if(gamestate.player && gamestate.player.type != "dead"){
@@ -683,9 +694,12 @@ Game.prototype.update = function(gamestate) {
         
         this.coordenate.refpoint = this.player;
         this.radarCoordenate.refpoint = this.player;
-        
 
         gamestate.entities.push(gamestate.player);
+        
+        $('body.' + gamestate.player.group.name + ' .meter span').css('width', parseFloat(gamestate.player.cannon_percentage) + '%');
+        console.log($('.meter.' + gamestate.player.group.name));
+        
       }else{
         
         if( $('#myModal').css('display') == 'none'){
