@@ -8,4 +8,4 @@ node game.js
 ```
 
 # How does it looks like?
-![Uploading Screenshot 2021-03-28 at 18.38.39.png…]()
+![How does it look](docs/how_does_it_look_like.png?raw=true)
