@@ -12,5 +12,5 @@ node game.js
 
 Now have fun accessing http://127.0.0.1
 
-# How does it looks like?
+# How does it look like?
 ![How does it look](docs/how_does_it_look_like.png?raw=true)
